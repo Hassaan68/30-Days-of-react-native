@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputInstance,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -69,9 +70,9 @@ export default function ProfileEditFormSolution({
 }: ProfileEditFormProps) {
   const [savedNotice, setSavedNotice] = useState(false);
 
-  const usernameRef = useRef<TextInput>(null);
-  const bioRef = useRef<TextInput>(null);
-  const websiteRef = useRef<TextInput>(null);
+  const usernameRef = useRef<TextInputInstance>(null);
+  const bioRef = useRef<TextInputInstance>(null);
+  const websiteRef = useRef<TextInputInstance>(null);
 
   const {
     control,
@@ -105,6 +106,10 @@ export default function ProfileEditFormSolution({
       const message = error instanceof Error ? error.message : 'Unable to save profile right now.';
       setError('root', { type: 'server', message });
     }
+  };
+
+  const submitForm = (): void => {
+    void handleSubmit(handleFormSubmit)();
   };
 
   return (
@@ -273,7 +278,7 @@ export default function ProfileEditFormSolution({
                   autoCorrect={false}
                   returnKeyType="done"
                   submitBehavior="blurAndSubmit"
-                  onSubmitEditing={handleSubmit(handleFormSubmit)}
+                  onSubmitEditing={submitForm}
                   accessibilityLabel="Website"
                   accessibilityHint="Optional link starting with https://"
                 />
@@ -315,7 +320,7 @@ export default function ProfileEditFormSolution({
                 !canSave && styles.buttonDisabled,
                 pressed && canSave && styles.buttonPressed,
               ]}
-              onPress={handleSubmit(handleFormSubmit)}
+              onPress={submitForm}
               disabled={!canSave}
               accessibilityRole="button"
               accessibilityLabel="Save Changes"

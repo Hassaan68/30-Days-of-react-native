@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputInstance,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -55,9 +56,9 @@ export interface SignUpFormProps {
 export default function SignUpForm({ onSubmitSuccess }: SignUpFormProps) {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
-  const emailRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
-  const confirmPasswordRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInputInstance>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
+  const confirmPasswordRef = useRef<TextInputInstance>(null);
 
   const {
     control,
@@ -103,6 +104,10 @@ export default function SignUpForm({ onSubmitSuccess }: SignUpFormProps) {
         error instanceof Error ? error.message : 'Something went wrong. Please try again.';
       setError('root', { type: 'server', message });
     }
+  };
+
+  const submitForm = (): void => {
+    void handleSubmit(onSubmit)();
   };
 
   return (
@@ -275,7 +280,7 @@ export default function SignUpForm({ onSubmitSuccess }: SignUpFormProps) {
                   textContentType="newPassword"
                   returnKeyType="done"
                   submitBehavior="blurAndSubmit"
-                  onSubmitEditing={handleSubmit(onSubmit)}
+                  onSubmitEditing={submitForm}
                   accessibilityLabel="Confirm Password"
                   accessibilityHint="Re-enter the exact same password"
                 />
@@ -332,7 +337,7 @@ export default function SignUpForm({ onSubmitSuccess }: SignUpFormProps) {
               isSubmitting && styles.submitDisabled,
               pressed && !isSubmitting && styles.submitPressed,
             ]}
-            onPress={handleSubmit(onSubmit)}
+            onPress={submitForm}
             disabled={isSubmitting}
             accessibilityRole="button"
             accessibilityLabel="Create Account"

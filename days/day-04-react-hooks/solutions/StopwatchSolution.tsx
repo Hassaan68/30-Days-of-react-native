@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  type TextInputInstance,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export interface LapEntry {
@@ -107,7 +114,7 @@ export function StopwatchSolution() {
   const { elapsedMs, isRunning, laps, fastestSplitMs, toggleRunning, recordLap, reset } =
     useStopwatch();
   const [note, setNote] = useState<string>('');
-  const noteInputRef = useRef<TextInput | null>(null);
+  const noteInputRef = useRef<TextInputInstance>(null);
 
   const handleRecordLap = (): void => {
     recordLap(note);

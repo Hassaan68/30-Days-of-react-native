@@ -1,5 +1,16 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { type Ref, useState } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  type TextInstance,
+  type TextProps,
+  type TextStyle,
+  View,
+  type ViewInstance,
+  type ViewProps,
+  type ViewStyle,
+} from 'react-native';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -9,6 +20,32 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+
+/**
+ * React Native 0.88 uses recursive `ReadonlyArray` style props, which can hit
+ * TypeScript's instantiation depth limit inside Reanimated 3's `AnimatedStyle`.
+ * These flat-style wrappers preserve strict typing and host ref forwarding.
+ */
+interface FlatAnimatedViewProps extends Omit<ViewProps, 'style'> {
+  ref?: Ref<ViewInstance>;
+  style?: ViewStyle | ViewStyle[];
+}
+
+interface FlatAnimatedTextProps extends Omit<TextProps, 'style'> {
+  ref?: Ref<TextInstance>;
+  style?: TextStyle | TextStyle[];
+}
+
+function FlatView({ ref, ...props }: FlatAnimatedViewProps) {
+  return <View ref={ref} {...props} />;
+}
+
+function FlatText({ ref, ...props }: FlatAnimatedTextProps) {
+  return <Text ref={ref} {...props} />;
+}
+
+const ReanimatedView = Animated.createAnimatedComponent(FlatView);
+const ReanimatedText = Animated.createAnimatedComponent(FlatText);
 
 export interface ExpandableCardSolutionProps {
   title: string;
@@ -34,15 +71,15 @@ export function ExpandableCardSolution({
   const progress = useSharedValue(initialExpanded ? 1 : 0);
   const cardScale = useSharedValue(1);
 
-  const chevronAnimatedStyle = useAnimatedStyle(() => ({
+  const chevronAnimatedStyle: TextStyle = useAnimatedStyle<TextStyle>(() => ({
     transform: [{ rotate: `${progress.value * 180}deg` }],
   }));
 
-  const cardAnimatedStyle = useAnimatedStyle(() => ({
+  const cardAnimatedStyle: ViewStyle = useAnimatedStyle<ViewStyle>(() => ({
     transform: [{ scale: cardScale.value }],
   }));
 
-  const bodyAnimatedStyle = useAnimatedStyle(() => ({
+  const bodyAnimatedStyle: ViewStyle = useAnimatedStyle<ViewStyle>(() => ({
     opacity: progress.value,
     transform: [{ translateY: reducedMotion ? 0 : (1 - progress.value) * -6 }],
   }));
@@ -66,7 +103,7 @@ export function ExpandableCardSolution({
   };
 
   return (
-    <Animated.View style={[styles.card, cardAnimatedStyle]}>
+    <ReanimatedView style={[styles.card, cardAnimatedStyle]}>
       <Pressable
         onPress={handleToggle}
         onPressIn={handlePressIn}
@@ -80,19 +117,19 @@ export function ExpandableCardSolution({
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.summary}>{summary}</Text>
         </View>
-        <Animated.Text style={[styles.chevron, chevronAnimatedStyle]}>▼</Animated.Text>
+        <ReanimatedText style={[styles.chevron, chevronAnimatedStyle]}>▼</ReanimatedText>
       </Pressable>
 
       {expanded ? (
-        <Animated.View
+        <ReanimatedView
           entering={reducedMotion ? undefined : FadeIn.duration(180)}
           exiting={reducedMotion ? undefined : FadeOut.duration(140)}
           style={[styles.body, bodyAnimatedStyle]}
         >
           <Text style={styles.details}>{details}</Text>
-        </Animated.View>
+        </ReanimatedView>
       ) : null}
-    </Animated.View>
+    </ReanimatedView>
   );
 }
 

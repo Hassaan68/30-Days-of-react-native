@@ -1,5 +1,13 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { type Ref, useState } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ViewInstance,
+  type ViewProps,
+  type ViewStyle,
+} from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   FadeIn,
@@ -11,6 +19,23 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+
+/**
+ * React Native 0.88 types `ViewProps['style']` with a recursive `ReadonlyArray`,
+ * which can hit TypeScript's instantiation depth limit in Reanimated 3's
+ * `AnimatedStyle` helper. Using a flat `ViewStyle | ViewStyle[]` prop keeps
+ * strict style typing while preserving native host ref forwarding for Reanimated.
+ */
+interface FlatAnimatedViewProps extends Omit<ViewProps, 'style'> {
+  ref?: Ref<ViewInstance>;
+  style?: ViewStyle | ViewStyle[];
+}
+
+function FlatView({ ref, ...props }: FlatAnimatedViewProps) {
+  return <View ref={ref} {...props} />;
+}
+
+const ReanimatedView = Animated.createAnimatedComponent(FlatView);
 
 export interface DraggableCardProps {
   title?: string;
@@ -108,7 +133,7 @@ export function DraggableCard({
 
   const composedGesture = Gesture.Simultaneous(panGesture, doubleTapGesture);
 
-  const animatedCardStyle = useAnimatedStyle(() => {
+  const animatedCardStyle: ViewStyle = useAnimatedStyle<ViewStyle>(() => {
     const rotationDeg = reducedMotion ? 0 : translateX.value / 20;
     const progress = Math.min(Math.abs(translateX.value) / (dismissThreshold * 1.5), 1);
 
@@ -123,13 +148,17 @@ export function DraggableCard({
     };
   });
 
+  const enteringCardAnimation = reducedMotion ? undefined : FadeIn.duration(220);
+  const exitingCardAnimation = reducedMotion ? undefined : FadeOut.duration(180);
+  const enteringEmptyAnimation = reducedMotion ? undefined : FadeIn.duration(200);
+
   return (
     <GestureHandlerRootView style={styles.container}>
       {visible ? (
         <GestureDetector gesture={composedGesture}>
-          <Animated.View
-            entering={reducedMotion ? undefined : FadeIn.duration(220)}
-            exiting={reducedMotion ? undefined : FadeOut.duration(180)}
+          <ReanimatedView
+            entering={enteringCardAnimation}
+            exiting={exitingCardAnimation}
             style={[styles.card, animatedCardStyle]}
             accessibilityRole="adjustable"
             accessibilityLabel={title}
@@ -141,18 +170,15 @@ export function DraggableCard({
             <Pressable onPress={resetPosition} style={styles.secondaryButton}>
               <Text style={styles.secondaryButtonText}>Recenter Card</Text>
             </Pressable>
-          </Animated.View>
+          </ReanimatedView>
         </GestureDetector>
       ) : (
-        <Animated.View
-          entering={reducedMotion ? undefined : FadeIn.duration(200)}
-          style={styles.emptyState}
-        >
+        <ReanimatedView entering={enteringEmptyAnimation} style={styles.emptyState}>
           <Text style={styles.emptyTitle}>Card Dismissed</Text>
           <Pressable onPress={handleRestore} style={styles.restoreButton}>
             <Text style={styles.restoreButtonText}>Restore Card</Text>
           </Pressable>
-        </Animated.View>
+        </ReanimatedView>
       )}
     </GestureHandlerRootView>
   );

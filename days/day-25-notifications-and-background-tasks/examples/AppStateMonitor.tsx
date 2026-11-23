@@ -17,23 +17,38 @@ export interface AppTransitionEntry {
 }
 
 export interface UseAppLifecycleResult {
-  appState: AppStateStatus;
+  appState: AppStateStatus | null;
   lastAwayDurationMs: number | null;
   transitions: AppTransitionEntry[];
 }
 
 const MAX_HISTORY_ENTRIES = 8;
 
+function parseAppStateStatus(state: string | null | undefined): AppStateStatus | null {
+  if (
+    state === 'active' ||
+    state === 'background' ||
+    state === 'inactive' ||
+    state === 'extension' ||
+    state === 'unknown'
+  ) {
+    return state;
+  }
+
+  return null;
+}
+
 /**
  * Tracks React Native's `AppState` lifecycle (`active`, `inactive`, `background`)
  * and triggers callbacks when the user leaves or returns to the app.
  */
 export function useAppLifecycle(callbacks: AppLifecycleCallbacks = {}): UseAppLifecycleResult {
-  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
+  const initialState = parseAppStateStatus(AppState.currentState);
+  const [appState, setAppState] = useState<AppStateStatus | null>(initialState);
   const [lastAwayDurationMs, setLastAwayDurationMs] = useState<number | null>(null);
   const [transitions, setTransitions] = useState<AppTransitionEntry[]>([]);
 
-  const previousStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const previousStateRef = useRef<AppStateStatus | null>(initialState);
   const backgroundedAtRef = useRef<number | null>(null);
   const callbacksRef = useRef<AppLifecycleCallbacks>(callbacks);
 
@@ -50,7 +65,7 @@ export function useAppLifecycle(callbacks: AppLifecycleCallbacks = {}): UseAppLi
       const now = Date.now();
       const entry: AppTransitionEntry = {
         id: `${now}-${nextState}`,
-        from: previousState,
+        from: previousState ?? 'unknown',
         to: nextState,
         timestamp: new Date(now).toLocaleTimeString(),
       };
@@ -111,7 +126,7 @@ export function AppStateMonitor() {
       <View style={styles.statusCard}>
         <Text style={styles.label}>Current AppState</Text>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{appState.toUpperCase()}</Text>
+          <Text style={styles.badgeText}>{(appState ?? 'unknown').toUpperCase()}</Text>
         </View>
         <Text style={styles.meta}>
           {lastAwayDurationMs !== null

@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  type TextInputInstance,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export interface LapEntry {
@@ -25,7 +32,7 @@ export function StopwatchExercise() {
   const [laps, setLaps] = useState<LapEntry[]>([]);
   const [note, setNote] = useState<string>('');
 
-  const noteInputRef = useRef<TextInput | null>(null);
+  const noteInputRef = useRef<TextInputInstance>(null);
 
   // TODO (Beginner): When `isRunning` is true, start a 100ms interval updating `elapsedMs`
   // using a functional updater, and return a cleanup function calling `clearInterval`.

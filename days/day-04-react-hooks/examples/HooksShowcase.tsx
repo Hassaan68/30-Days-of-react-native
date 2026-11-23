@@ -1,5 +1,12 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  type TextInputInstance,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDebounce, useToggle } from './useDebounce';
 
@@ -57,7 +64,7 @@ export function HooksShowcase() {
   const [query, setQuery] = useState<string>('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const searchInputRef = useRef<TextInput | null>(null);
+  const searchInputRef = useRef<TextInputInstance>(null);
   const debouncedQuery = useDebounce(query, 250);
   const compactMode = useToggle(false);
 

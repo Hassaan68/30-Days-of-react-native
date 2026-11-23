@@ -66,6 +66,10 @@ export default function ProfileEditFormExercise({
     }
   };
 
+  const submitForm = (): void => {
+    void handleSubmit(handleFormSubmit)();
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -108,7 +112,7 @@ export default function ProfileEditFormExercise({
           {/* TODO (Challenge): Chain keyboard refs, disable Save when !isDirty, and add a Reset button */}
           <Pressable
             style={styles.saveButton}
-            onPress={handleSubmit(handleFormSubmit)}
+            onPress={submitForm}
             disabled={isSubmitting}
             accessibilityRole="button"
             accessibilityLabel="Save Changes"

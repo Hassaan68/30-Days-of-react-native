@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { type ColorValue, StyleSheet, Text, View } from 'react-native';
 
 export interface TabsLayoutProps {
   unreadCount?: number;
@@ -7,14 +7,16 @@ export interface TabsLayoutProps {
 
 interface TabIconProps {
   symbol: string;
-  color: string;
+  color: ColorValue;
   focused: boolean;
 }
 
 function TabIcon({ symbol, color, focused }: TabIconProps) {
+  const iconColor: ColorValue = color ?? '#64748B';
+
   return (
     <View style={[styles.iconWrapper, focused && styles.iconFocused]}>
-      <Text style={[styles.iconText, { color }]} accessibilityElementsHidden>
+      <Text style={[styles.iconText, { color: iconColor }]} accessibilityElementsHidden>
         {symbol}
       </Text>
     </View>

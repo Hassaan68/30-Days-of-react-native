@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputInstance,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,7 +21,7 @@ import { loginSchema, type LoginFormValues } from '../validation/authSchemas';
 export function LoginScreen() {
   const { signIn, error, isSubmitting, clearError } = useAuth();
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const passwordInputRef = useRef<TextInput | null>(null);
+  const passwordInputRef = useRef<TextInputInstance>(null);
 
   const {
     control,

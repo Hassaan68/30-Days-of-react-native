@@ -365,7 +365,7 @@ export function TasksScreen(): React.JSX.Element {
                   {summary.completed === 1 ? 'Task' : 'Tasks'}
                 </Text>
               </Pressable>
-            ) : null
+            ) : undefined
           }
         />
       </View>

@@ -27,14 +27,14 @@ describe('validateLoginCredentials', () => {
 });
 
 describe('LoginCardSolution', () => {
-  it('shows a validation alert and skips onLogin when inputs are invalid', () => {
+  it('shows a validation alert and skips onLogin when inputs are invalid', async () => {
     const mockLogin = jest.fn<Promise<void>, [LoginCredentials]>().mockResolvedValue(undefined);
 
-    render(<LoginCardSolution onLogin={mockLogin} />);
+    await render(<LoginCardSolution onLogin={mockLogin} />);
 
-    fireEvent.changeText(screen.getByLabelText('Email address'), 'invalid-email');
-    fireEvent.changeText(screen.getByLabelText('Password'), 'password123');
-    fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
+    await fireEvent.changeText(screen.getByLabelText('Email address'), 'invalid-email');
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'password123');
+    await fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(screen.getByRole('alert')).toBeTruthy();
     expect(screen.getByText('Please enter a valid email address.')).toBeTruthy();
@@ -44,11 +44,11 @@ describe('LoginCardSolution', () => {
   it('normalizes credentials, calls onLogin, and shows a welcome message on success', async () => {
     const mockLogin = jest.fn<Promise<void>, [LoginCredentials]>().mockResolvedValue(undefined);
 
-    render(<LoginCardSolution onLogin={mockLogin} />);
+    await render(<LoginCardSolution onLogin={mockLogin} />);
 
-    fireEvent.changeText(screen.getByLabelText('Email address'), '  Alex@Example.com  ');
-    fireEvent.changeText(screen.getByLabelText('Password'), 'supersecret');
-    fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
+    await fireEvent.changeText(screen.getByLabelText('Email address'), '  Alex@Example.com  ');
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'supersecret');
+    await fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
@@ -66,11 +66,11 @@ describe('LoginCardSolution', () => {
       .fn<Promise<void>, [LoginCredentials]>()
       .mockRejectedValue(new Error('Invalid email or password.'));
 
-    render(<LoginCardSolution onLogin={mockLogin} />);
+    await render(<LoginCardSolution onLogin={mockLogin} />);
 
-    fireEvent.changeText(screen.getByLabelText('Email address'), 'alex@example.com');
-    fireEvent.changeText(screen.getByLabelText('Password'), 'wrongpass');
-    fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
+    await fireEvent.changeText(screen.getByLabelText('Email address'), 'alex@example.com');
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'wrongpass');
+    await fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeTruthy();

@@ -47,50 +47,50 @@ describe('priceUtils', () => {
 });
 
 describe('CounterWidget', () => {
-  it('renders the initial count and updates when incremented or decremented', () => {
+  it('renders the initial count and updates when incremented or decremented', async () => {
     const handleChange = jest.fn<void, [number]>();
 
-    render(<CounterWidget initialValue={2} step={1} min={0} max={5} onChange={handleChange} />);
+    await render(<CounterWidget initialValue={2} step={1} min={0} max={5} onChange={handleChange} />);
 
     expect(screen.getByText('Count: 2')).toBeTruthy();
 
-    fireEvent.press(screen.getByRole('button', { name: 'Increment counter' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Increment counter' }));
     expect(screen.getByText('Count: 3')).toBeTruthy();
     expect(handleChange).toHaveBeenLastCalledWith(3);
 
-    fireEvent.press(screen.getByRole('button', { name: 'Decrement counter' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Decrement counter' }));
     expect(screen.getByText('Count: 2')).toBeTruthy();
     expect(handleChange).toHaveBeenLastCalledWith(2);
   });
 
-  it('enforces minimum and maximum boundaries', () => {
+  it('enforces minimum and maximum boundaries', async () => {
     const handleChange = jest.fn<void, [number]>();
 
-    render(<CounterWidget initialValue={1} step={1} min={0} max={2} onChange={handleChange} />);
+    await render(<CounterWidget initialValue={1} step={1} min={0} max={2} onChange={handleChange} />);
 
     const incrementButton = screen.getByRole('button', { name: 'Increment counter' });
     const decrementButton = screen.getByRole('button', { name: 'Decrement counter' });
 
-    fireEvent.press(incrementButton);
-    fireEvent.press(incrementButton);
+    await fireEvent.press(incrementButton);
+    await fireEvent.press(incrementButton);
     expect(screen.getByText('Count: 2')).toBeTruthy();
     expect(handleChange).toHaveBeenCalledTimes(1);
 
-    fireEvent.press(decrementButton);
-    fireEvent.press(decrementButton);
-    fireEvent.press(decrementButton);
+    await fireEvent.press(decrementButton);
+    await fireEvent.press(decrementButton);
+    await fireEvent.press(decrementButton);
     expect(screen.getByText('Count: 0')).toBeTruthy();
     expect(handleChange).toHaveBeenCalledTimes(3);
   });
 
-  it('resets back to the initial value when Reset is pressed', () => {
-    render(<CounterWidget initialValue={3} min={0} max={10} />);
+  it('resets back to the initial value when Reset is pressed', async () => {
+    await render(<CounterWidget initialValue={3} min={0} max={10} />);
 
-    fireEvent.press(screen.getByRole('button', { name: 'Increment counter' }));
-    fireEvent.press(screen.getByRole('button', { name: 'Increment counter' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Increment counter' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Increment counter' }));
     expect(screen.getByText('Count: 5')).toBeTruthy();
 
-    fireEvent.press(screen.getByRole('button', { name: 'Reset counter' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Reset counter' }));
     expect(screen.getByText('Count: 3')).toBeTruthy();
   });
 });

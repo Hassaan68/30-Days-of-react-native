@@ -16,8 +16,8 @@ const sampleHabit: Habit = {
 };
 
 describe('HabitCard', () => {
-  it('renders habit details, duration, category, and streak', () => {
-    render(
+  it('renders habit details, duration, category, and streak', async () => {
+    await render(
       <HabitCard
         habit={sampleHabit}
         isCompletedToday={false}
@@ -35,10 +35,10 @@ describe('HabitCard', () => {
     expect(screen.getByText('3 day streak')).toBeTruthy();
   });
 
-  it('calls onToggle with the habit id and reflects checked accessibility state', () => {
+  it('calls onToggle with the habit id and reflects checked accessibility state', async () => {
     const onToggle = jest.fn();
 
-    render(
+    await render(
       <HabitCard
         habit={sampleHabit}
         isCompletedToday={true}
@@ -50,15 +50,15 @@ describe('HabitCard', () => {
     const toggleButton = screen.getByTestId('habit-toggle-habit-focus-1');
     expect(toggleButton.props.accessibilityState).toEqual({ checked: true });
 
-    fireEvent.press(toggleButton);
+    await fireEvent.press(toggleButton);
     expect(onToggle).toHaveBeenCalledTimes(1);
     expect(onToggle).toHaveBeenCalledWith('habit-focus-1');
   });
 
-  it('renders archive action only when onArchive is provided and triggers it on press', () => {
+  it('renders archive action only when onArchive is provided and triggers it on press', async () => {
     const onArchive = jest.fn();
 
-    const { rerender } = render(
+    const { rerender } = await render(
       <HabitCard
         habit={sampleHabit}
         isCompletedToday={false}
@@ -69,7 +69,7 @@ describe('HabitCard', () => {
 
     expect(screen.queryByTestId('habit-archive-habit-focus-1')).toBeNull();
 
-    rerender(
+    await rerender(
       <HabitCard
         habit={sampleHabit}
         isCompletedToday={false}
@@ -80,7 +80,7 @@ describe('HabitCard', () => {
     );
 
     const archiveButton = screen.getByTestId('habit-archive-habit-focus-1');
-    fireEvent.press(archiveButton);
+    await fireEvent.press(archiveButton);
     expect(onArchive).toHaveBeenCalledTimes(1);
     expect(onArchive).toHaveBeenCalledWith('habit-focus-1');
   });

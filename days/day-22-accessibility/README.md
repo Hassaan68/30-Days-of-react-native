@@ -13,6 +13,9 @@ By the end of Day 22, you will be able to:
 - Completion of [Day 05: Styling and Layout](../day-05-styling-and-layout/README.md), [Day 06: Core Components](../day-06-core-components/README.md), and [Day 20: Testing](../day-20-testing/README.md).
 - Basic familiarity with `Pressable`, `Switch`, `StyleSheet`, and custom React hooks.
 
+## Why This Concept Matters
+Accessibility is not an optional "nice-to-have" polish pass—it determines whether real people can use your app at all. Screen-reader users, older adults using 200% system font sizes, and anyone tapping one-handed in bright sunlight rely on proper semantic labels, legible contrast, and generous touch targets. Building accessibility into reusable components from the start takes minutes, whereas retrofitting an entire app right before App Store submission or an enterprise accessibility audit takes weeks.
+
 ## Introduction
 Over **1 billion people worldwide** live with a permanent disability affecting vision, hearing, motor control, or cognition — and virtually *every* mobile user experiences temporary or situational impairments: using a phone one-handed on a crowded train, reading a screen in harsh sunlight, or holding a sleeping child while muting audio.
 
@@ -20,7 +23,20 @@ Over **1 billion people worldwide** live with a permanent disability affecting v
 
 ## Concepts
 
-### 1. Screen Readers: VoiceOver (iOS) & TalkBack (Android)
+### 1. Web ARIA vs. React Native Accessibility Props
+If you come from React for the web, you already know semantic HTML and ARIA attributes. React Native uses native accessibility props instead of DOM attributes (though React Native also supports a subset of `aria-*` aliases, the explicit `accessibility*` props remain the most complete and widely used across iOS and Android):
+
+| Web HTML / ARIA | React Native Prop / API | Notes |
+| --- | --- | --- |
+| `aria-label="Close"` | `accessibilityLabel="Close"` | Spoken name for icon-only buttons or grouped rows |
+| `role="button"` / `<button>` | `accessibilityRole="button"` | Communicates native control semantics (`button`, `switch`, `header`, `checkbox`, `tab`, `alert`, etc.) |
+| `aria-checked`, `aria-expanded`, `aria-disabled`, `aria-selected`, `aria-busy` | `accessibilityState={{ checked, expanded, disabled, selected, busy }}` | Single object describing all dynamic widget states |
+| `aria-live="polite"` | `accessibilityLiveRegion="polite"` *(Android)* + `AccessibilityInfo.announceForAccessibility(...)` *(iOS)* | Speaks dynamic updates without moving focus |
+| `aria-valuemin` / `max` / `now` | `accessibilityValue={{ min, max, now, text }}` | Announces numeric ranges (sliders, progress bars) |
+| `aria-hidden="true"` | `accessible={false}`, `importantForAccessibility="no-hide-descendants"` *(Android)*, `accessibilityElementsHidden={true}` *(iOS)* | Hides decorative glyphs or duplicate nested controls |
+| Mouse pointer precision | **Minimum 44×44 pt (iOS) / 48×48 dp (Android)** touch target | Enforced via `minWidth`/`minHeight` or `hitSlop` for finger taps |
+
+### 2. Screen Readers: VoiceOver (iOS) & TalkBack (Android)
 Screen readers let blind and low-vision users navigate an app entirely by sound and touch gestures:
 - **VoiceOver (iOS)**: Swipe right/left to move focus sequentially across elements; double-tap anywhere to activate the focused element. Enable via **Settings → Accessibility → VoiceOver** (or **Accessibility Inspector** in Xcode for the iOS Simulator).
 - **TalkBack (Android)**: Same swipe-to-focus and double-tap-to-activate model. Enable via **Settings → Accessibility → TalkBack** on an Android device or emulator (with Google Accessibility Suite installed).
@@ -31,7 +47,7 @@ When a screen reader focuses a component, it typically announces four pieces of 
 3. **Role & State** — *What kind of control is it, and is it on/off/disabled?* (`accessibilityRole`, `accessibilityState`)
 4. **Hint** — *What happens if I activate it?* (`accessibilityHint`, read after a brief pause)
 
-### 2. Core React Native Accessibility Props
+### 3. Core React Native Accessibility Props
 
 | Prop | Purpose | Example |
 | --- | --- | --- |
@@ -45,7 +61,7 @@ When a screen reader focuses a component, it typically announces four pieces of 
 
 > **Hiding decorative elements:** When a parent `Pressable` already provides a complete `accessibilityLabel` and `accessibilityState`, hide decorative icons or duplicate badges inside it with `accessible={false}`, `importantForAccessibility="no-hide-descendants"` (Android), and `accessibilityElementsHidden={true}` (iOS).
 
-### 3. Minimum Touch Target Sizes & `hitSlop`
+### 4. Minimum Touch Target Sizes & `hitSlop`
 Users with motor impairments — or anyone walking while tapping — struggle with tiny tap targets:
 - **Apple Human Interface Guidelines (iOS):** Minimum **44 × 44 pt**.
 - **Material Design Guidelines (Android):** Minimum **48 × 48 dp**.
@@ -57,7 +73,7 @@ Targeting **48 × 48** everywhere satisfies both platforms comfortably. If a vis
 <Pressable hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }} ... />
 ```
 
-### 4. WCAG 2.1 Color Contrast Ratios
+### 5. WCAG 2.1 Color Contrast Ratios
 Low-contrast light-gray text on white backgrounds looks sleek on a calibrated studio monitor, but becomes unreadable outdoors or for users with low vision or color vision deficiency:
 - **Normal text (< 18pt regular or < 14pt bold):** Minimum **4.5:1** contrast ratio (WCAG AA).
 - **Large text (≥ 18pt regular or ≥ 14pt bold) and UI components / icons:** Minimum **3.0:1** contrast ratio (WCAG AA).
@@ -71,13 +87,13 @@ Low-contrast light-gray text on white backgrounds looks sleek on a calibrated st
 | `#94A3B8` (Slate 400) | `#FFFFFF` | 2.6:1 | Fails AA for text |
 | `#CBD5E1` (Slate 300) | `#FFFFFF` | 1.5:1 | Fails AA completely |
 
-### 5. Dynamic Type & Font Scaling
+### 6. Dynamic Type & Font Scaling
 Both iOS (Dynamic Type) and Android (Font Size / Display Size) allow users to scale system text up to 200% or more.
 - By default, React Native `<Text>` sets `allowFontScaling={true}`. **Do not globally disable font scaling** (`allowFontScaling={false}`) on body text!
 - Instead, avoid fixed pixel `height` values on containers holding text — use `minHeight` and `paddingVertical` so rows grow naturally.
 - Use `maxFontSizeMultiplier` (e.g., `maxFontSizeMultiplier={2}` on body text or `1.5` on compact badges/tabs) to allow generous scaling while preventing extreme layouts from overlapping.
 
-### 6. Respecting Reduced Motion
+### 7. Respecting Reduced Motion
 Some users experience vestibular discomfort (dizziness or nausea) from zooming, parallax, or spring-bounce animations. Query and subscribe to the system preference via `AccessibilityInfo`:
 
 ```ts
@@ -87,7 +103,7 @@ const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceM
 
 When reduced motion is enabled, replace sliding/scaling transitions with instant changes or gentle opacity/color fades.
 
-### 7. Automated Accessibility Testing with React Native Testing Library
+### 8. Automated Accessibility Testing with React Native Testing Library
 React Native Testing Library encourages **accessibility-first queries** (`getByRole`, `getByLabelText`, `getByA11yHint`). If your test can locate a control by role and label, a screen reader user can too:
 
 ```tsx
@@ -120,9 +136,22 @@ test('announces switch state and toggles on press', () => {
 ```
 
 ## Code Examples
-Explore the complete, strictly typed examples in [`./examples/`](./examples/):
-1. [`examples/AccessibleSettingsRow.tsx`](./examples/AccessibleSettingsRow.tsx) — Single-focus-stop accessible settings row combining `accessibilityRole="switch"`, `accessibilityState`, `accessibilityLiveRegion`, `AccessibilityInfo.announceForAccessibility`, `maxFontSizeMultiplier`, WCAG AA contrast, and Reduced Motion awareness.
-2. [`examples/AccessibleIconButton.tsx`](./examples/AccessibleIconButton.tsx) — Compact 36×36 icon button expanded to a 48×48 touch target via `hitSlop`, with mandatory `accessibilityLabel`, badge count announcements, and `busy`/`disabled` states.
+
+> **How to run & preview today's examples:**
+> - **Interactive preview (this repository):** Run `npm start` from the repository root to open the shared Expo launcher and interact with Day 22's accessible components directly on your simulator, emulator, or phone (ideal for testing VoiceOver, TalkBack, and 200% font scaling).
+> - **In your own Expo project:** Drop reusable UI components into `src/components/ui/` and render them inside any screen (e.g., `app/settings.tsx`).
+
+### Example 1: Single-Focus-Stop Accessible Settings Row
+- **Type:** Reusable interactive UI component (`AccessibleSettingsRow`)
+- **File:** [`examples/AccessibleSettingsRow.tsx`](./examples/AccessibleSettingsRow.tsx)
+- **Where to place in an Expo project:** `src/components/ui/AccessibleSettingsRow.tsx`
+- **What it demonstrates:** Combines `accessibilityRole="switch"`, `accessibilityState`, `accessibilityLiveRegion`, `AccessibilityInfo.announceForAccessibility`, `maxFontSizeMultiplier`, WCAG AA contrast, and Reduced Motion awareness.
+
+### Example 2: Compact Icon Button with `hitSlop` & Badge Announcements
+- **Type:** Reusable interactive UI component (`AccessibleIconButton`)
+- **File:** [`examples/AccessibleIconButton.tsx`](./examples/AccessibleIconButton.tsx)
+- **Where to place in an Expo project:** `src/components/ui/AccessibleIconButton.tsx`
+- **What it demonstrates:** Keeps a compact 36×36 visual icon while expanding to a 48×48 touch target via `hitSlop`, enforces a required `label` prop in TypeScript, announces unread `badgeCount`, and exposes `busy`/`disabled` states.
 
 ## Step-by-Step Explanation
 Let's trace why `AccessibleSettingsRow.tsx` is structured the way it is:
@@ -132,13 +161,33 @@ Let's trace why `AccessibleSettingsRow.tsx` is structured the way it is:
 4. **Reduced-motion press feedback:** `useEffect` reads `AccessibilityInfo.isReduceMotionEnabled()` and listens to `reduceMotionChanged`. When reduced motion is active, pressing changes only the background color (`rowPressedStatic`) instead of applying `transform: [{ scale: 0.99 }]`.
 5. **Flexible height + capped font scaling:** Using `minHeight: 60` (never a fixed `height`) with `allowFontScaling={true}` and `maxFontSizeMultiplier={2}` allows text to double in size cleanly without clipping.
 
+## Expected Output
+
+### 1. Visual Layout & Interaction
+When rendered in the Expo app (`npm start`):
+
+```text
+┌─────────────────────────────────────────┐
+│ Push Notifications             [ (●) ]  │  ← 60pt+ minHeight, single focus stop
+│ Receive daily reminders                 │  ← #475569 on #FFFFFF (7.5:1 contrast)
+└─────────────────────────────────────────┘
+
+    [ 🔔 ]③   ← 36×36 visual circle + 6pt hitSlop on all sides = 48×48 touch area
+```
+
+### 2. Screen Reader Output (VoiceOver / TalkBack)
+- Focusing `AccessibleSettingsRow`: *"Push Notifications. Receive daily reminders, switch button, off. Toggles push notifications."*
+- Double-tapping to toggle on: Visually switches to blue and politely announces *"Push Notifications enabled"* without losing focus.
+- Focusing `AccessibleIconButton` with `label="Notifications"` and `badgeCount={3}`: *"Notifications, 3 notifications, button."*
+- Turning system font size to **200%**: Text scales up smoothly and the card grows vertically with zero clipping.
+
 ## Common Mistakes
-- **Icon-only buttons without `accessibilityLabel`:** A `<Pressable><Text>✕</Text></Pressable>` leaves screen readers announcing `"multiplication sign"` or nothing at all. Always pass a clear `accessibilityLabel="Close"`.
-- **Putting the role in the label:** Writing `accessibilityLabel="Submit button"` alongside `accessibilityRole="button"` makes VoiceOver announce `"Submit button, button"`. Keep labels clean (`"Submit"`).
-- **Hardcoded container `height` around `<Text>`:** When a user turns on 200% Dynamic Type, fixed heights clip text vertically. Always use `minHeight` and padding.
-- **Disabling `allowFontScaling={false}` globally:** This breaks accessibility for millions of low-vision users who rely on larger system fonts.
-- **Nested interactive controls:** Putting a tappable `<Switch>` inside a tappable `<Pressable>` causes confusing focus order and duplicate announcements.
-- **Low-contrast placeholder or secondary text:** Trendy light grays (`#CBD5E1`, `#9CA3AF`) frequently fail the 4.5:1 WCAG AA threshold.
+- **Icon-only buttons without `accessibilityLabel`:** A `<Pressable><Text>✕</Text></Pressable>` leaves screen readers announcing `"multiplication sign"` or nothing at all. **Fix:** Always require an explicit `accessibilityLabel` (e.g., `"Close"`).
+- **Putting the role in the label:** Writing `accessibilityLabel="Submit button"` alongside `accessibilityRole="button"` makes VoiceOver announce `"Submit button, button"`. **Fix:** Keep labels clean (`"Submit"`) and let `accessibilityRole` speak the control type.
+- **Hardcoded container `height` around `<Text>`:** When a user turns on 200% Dynamic Type, fixed heights clip text vertically. **Fix:** Always use `minHeight` and `paddingVertical`.
+- **Disabling `allowFontScaling={false}` globally:** This breaks accessibility for millions of low-vision users who rely on larger system fonts. **Fix:** Keep `allowFontScaling={true}` and use `maxFontSizeMultiplier` where layouts are tight.
+- **Nested interactive controls:** Putting a tappable `<Switch>` inside a tappable `<Pressable>` causes confusing focus order and duplicate announcements. **Fix:** Hide the inner visual `Switch` from assistive tech (`pointerEvents="none"`, `accessible={false}`, `importantForAccessibility="no-hide-descendants"`, `accessibilityElementsHidden={true}`).
+- **Low-contrast placeholder or secondary text:** Trendy light grays (`#CBD5E1`, `#9CA3AF`) frequently fail the 4.5:1 WCAG AA threshold. **Fix:** Verify contrast ratios with a WCAG checker and prefer Slate 600 (`#475569`) or darker on white.
 
 ## Best Practices
 - **Audit with real screen readers early:** Turn on VoiceOver or TalkBack on your own phone once per feature and try completing the main user flow with your eyes closed.
@@ -154,10 +203,17 @@ Work through the guided exercises in [`./exercises/README.md`](./exercises/READM
 - **Challenge:** Build a reusable `useReducedMotion()` hook, disable press-scale transforms when Reduced Motion is active, and write a React Native Testing Library test verifying the accessible switch contract.
 
 ## Solutions
-Review the full, cleanly typed reference implementation in [`./solutions/AccessibleToggleSolution.tsx`](./solutions/AccessibleToggleSolution.tsx).
-- `useReducedMotion()` encapsulates the async check and listener cleanup so any screen or animated component can respect OS motion settings.
-- `AccessibleToggleSolution` demonstrates single-focus-stop grouping, WCAG AAA text contrast (`#475569` on `#FFFFFF`), capped Dynamic Type scaling, and cross-platform live announcements.
+Complete the Beginner, Intermediate, and Challenge fixes in [`./exercises/AccessibleToggleExercise.tsx`](./exercises/AccessibleToggleExercise.tsx) first, then compare your work with the reference solution.
+
+<details>
+<summary>Click to view solution notes & links</summary>
+
+Review the full, cleanly typed reference implementation in [`./solutions/AccessibleToggleSolution.tsx`](./solutions/AccessibleToggleSolution.tsx):
+- `useReducedMotion()` encapsulates the async `AccessibilityInfo.isReduceMotionEnabled()` check and `reduceMotionChanged` listener cleanup so any screen or animated component can respect OS motion settings.
+- `AccessibleToggleSolution` demonstrates single-focus-stop grouping, WCAG AAA text contrast (`#475569` on `#FFFFFF`), capped Dynamic Type scaling, and cross-platform live announcements (`accessibilityLiveRegion="polite"` + `AccessibilityInfo.announceForAccessibility`).
 - `AccessiblePreferencesDemo` composes the toggles inside a `SafeAreaView` from `react-native-safe-area-context` with a semantic `accessibilityRole="header"` title.
+
+</details>
 
 ## Mini Project
 **Accessible Profile & Settings Screen Audit**
@@ -182,7 +238,7 @@ Open your Profile App from [Day 07](../day-07-first-mobile-app/README.md) or Tas
 - [React Native Testing Library — Queries](https://callstack.github.io/react-native-testing-library/docs/api/queries)
 
 ## Progress Checklist
-- [ ] Read all concepts and inspected both code examples in `./examples/`
+- [ ] Read all concepts (including the Web ARIA vs. React Native props table) and inspected both code examples in `./examples/`
 - [ ] Completed Beginner, Intermediate, and Challenge tasks in `./exercises/AccessibleToggleExercise.tsx`
 - [ ] Compared my implementation with `./solutions/AccessibleToggleSolution.tsx`
 - [ ] Tested at least one screen with VoiceOver / Accessibility Inspector or TalkBack

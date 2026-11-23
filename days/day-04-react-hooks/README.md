@@ -18,6 +18,10 @@ By the end of Day 04, you will be able to:
 - Completed [Day 03: React Fundamentals](../day-03-react-fundamentals/README.md).
 - Comfortable with TypeScript generics, closures, and `setTimeout` / `setInterval`.
 
+## Why This Concept Matters
+
+Static screens are rare in real mobile apps. Almost every production feature—live search with debouncing, workout timers, auto-focusing the next input field, listening to keyboard or sensor subscriptions, or keeping expensive list filtering silky-smooth at 60 FPS—depends on choosing the right React Hook and cleaning up side effects properly. Mastering hooks now prevents memory leaks, stale closures, and sluggish re-renders across every app you build.
+
 ## Introduction
 
 Mobile screens do more than render static cards: they run countdown timers, debounce search input as a user types, focus a `TextInput` when a button is pressed, listen to keyboard or network events, and filter large lists cleanly. **React Hooks** give functional components structured, composable ways to manage state, side effects, refs, and performance—without ever writing legacy class components.
@@ -70,16 +74,23 @@ Always include every reactive value read inside the effect in its dependency arr
 
 `useRef<T>(initialValue)` returns a persistent `{ current: T }` object that survives across renders. Unlike `useState`, **mutating `ref.current` does NOT trigger a re-render**.
 
-> **React 19 Note:** In React 19.3 TypeScript types, `useRef` always expects an initial value argument (for example, `useRef<TextInput | null>(null)`).
+> **React 19.3 + React Native 0.88 Note:** In React 19.3 TypeScript types, `useRef` always requires an initial value argument (for example, `null`). Furthermore, under **React Native 0.88's Strict TypeScript API**, `TextInput` is typed as a function component rather than a class—so use **`useRef<TextInputInstance>(null)`** (importing `type TextInputInstance` from `'react-native'`), NOT `useRef<TextInput>(null)`. `TextInputInstance` is the imperative ref type that exposes native methods such as `.focus()`, `.blur()`, and `.clear()`.
 
 Two main use cases in React Native:
 
 1. **Holding imperative references to native components** (e.g., focusing or clearing a `TextInput`, scrolling a `ScrollView` / `FlatList`):
    ```tsx
-   const inputRef = useRef<TextInput | null>(null);
+   import { useRef } from 'react';
+   import { TextInput, type TextInputInstance } from 'react-native';
+
+   const inputRef = useRef<TextInputInstance>(null);
    const focusSearch = () => inputRef.current?.focus();
    ```
 2. **Storing non-UI mutable data across renders** (e.g., an interval ID, previous timestamp, or render counter).
+
+> **React Web vs. React Native (Hooks Differences):**
+> - **Refs point to native instances, not DOM nodes:** Instead of `useRef<HTMLInputElement>(null)`, React Native uses typed native instance handles like `useRef<TextInputInstance>(null)`.
+> - **Lifecycle differs from browser `window`:** Mobile apps have no `window.addEventListener('resize')` or full-page reloads—instead, hooks synchronize with native timers, `AppState` (foreground/background), keyboard events, and navigation focus, while previous screens often stay mounted in a navigation stack (making `useEffect` cleanup essential!).
 
 ### 4. `useMemo` & `useCallback`
 
@@ -122,10 +133,13 @@ const fullName = `${firstName} ${lastName}`;
 
 ## Code Examples
 
+- **Where to place in an Expo project:** Put reusable custom hooks (`useDebounce.ts`) inside `hooks/` (for example, `hooks/useDebounce.ts`), and place runnable screen components (`HooksShowcase.tsx`) in `app/index.tsx` or `components/HooksShowcase.tsx`.
+- **Preview immediately:** Run `npm start` from the repository root to launch the shared Expo playground and try out `HooksShowcase` interactively on iOS, Android, or Web right away.
+
 Inspect both examples in `./examples/`:
 
-1. [`./examples/useDebounce.ts`](./examples/useDebounce.ts) — Reusable generic `useDebounce<T>` hook and `useToggle` custom hook with clean TypeScript return types and timer cleanup.
-2. [`./examples/HooksShowcase.tsx`](./examples/HooksShowcase.tsx) — Interactive searchable catalog combining `useRef<TextInput | null>(null)` to focus/clear input, `useDebounce` to smooth search updates, `useMemo` to filter items, `useCallback` for a memoized `CatalogRow`, and `useToggle` to switch compact mode.
+1. [`./examples/useDebounce.ts`](./examples/useDebounce.ts) *(reusable custom hooks module)* — Reusable generic `useDebounce<T>` hook and `useToggle` custom hook with clean TypeScript return types and timer cleanup.
+2. [`./examples/HooksShowcase.tsx`](./examples/HooksShowcase.tsx) *(runnable interactive screen component)* — Interactive searchable catalog combining `useRef<TextInputInstance>(null)` to focus/clear input, `useDebounce` to smooth search updates, `useMemo` to filter items, `useCallback` for a memoized `TopicRow`, and `useToggle` to switch compact mode.
 
 Here is the generic `useDebounce` hook from [`./examples/useDebounce.ts`](./examples/useDebounce.ts):
 
@@ -155,6 +169,31 @@ export function useDebounce<T>(value: T, delayMs: number): T {
 2. **Imperative Focus with `useRef`:** In `HooksShowcase.tsx`, `searchInputRef` is attached to `<TextInput ref={searchInputRef} />`. Tapping the **Clear** button resets `query` to `''` and calls `searchInputRef.current?.focus()` so the user can immediately type a new search term.
 3. **Memoized Filtering (`useMemo`) and Memoized Rows (`React.memo` + `useCallback`):** `filteredTopics` is memoized on `debouncedQuery`. `handleSelectTopic` is wrapped in `useCallback` so `TopicRow` (wrapped in `memo`) avoids unnecessary re-renders when unrelated state like `compactMode` toggles.
 4. **No Redundant Effects:** Notice how the selected topic summary and filtered list count are derived cleanly during render without a single unnecessary `useEffect`.
+
+## Expected Output
+
+When you preview `HooksShowcase` in Expo, you see a clean searchable list of 6 React Hooks topics:
+
+```text
+React Hooks Showcase
+
+[ Search hooks (debounced 250ms)... ]  [ Clear ]
+
+Showing 6 of 6                         ( Compact: OFF )
+
++----------------------------------------------------+
+| useState & Functional Updates                      |
+| Core                                               |
++----------------------------------------------------+
+| useEffect & Cleanups                               |
+| Core                                               |
++----------------------------------------------------+
+```
+
+- Typing `"ref"` waits `250ms` after your last keystroke (via `useDebounce`), then smoothly narrows the list to **`Showing 1 of 6`** (`useRef & TextInput Focus`).
+- Tapping **Clear** resets the search box to empty and immediately focuses the `TextInput` via `searchInputRef.current?.focus()`.
+- Tapping **Compact: OFF** switches it to **Compact: ON**, hiding each row's category subtitle and tightening row padding.
+- Tapping any row highlights it in blue and displays a green **`Selected: ...`** banner at the top.
 
 ## Common Mistakes
 
@@ -186,9 +225,18 @@ Extract the timer mechanics into a reusable custom hook **`useStopwatch()`** ins
 
 ## Solutions
 
-Compare your work with the complete reference implementation:
+Try completing `StopwatchExercise.tsx` independently first before opening the reference notes below.
 
-- [`./solutions/StopwatchSolution.tsx`](./solutions/StopwatchSolution.tsx): Complete `useStopwatch` custom hook with clean `setInterval` cleanup, functional state updates, `useRef<TextInput | null>(null)` for lap notes, `useMemo` for fastest lap calculation, and `useCallback` for stable handlers.
+<details>
+<summary>Click to view solution notes &amp; links</summary>
+
+- [`./solutions/StopwatchSolution.tsx`](./solutions/StopwatchSolution.tsx): Complete `useStopwatch` custom hook with clean `setInterval` cleanup, functional state updates, `useRef<TextInputInstance>(null)` for lap notes, `useMemo` for fastest lap calculation, and `useCallback` for stable handlers.
+- **Key details to compare:**
+  - `useEffect` starts a `100ms` interval only when `isRunning` is `true` and returns `() => clearInterval(intervalId)` so pausing or unmounting never leaks timers.
+  - `fastestSplitMs` is derived with `useMemo` directly from `laps` (with a `noUncheckedIndexedAccess` guard on `laps[0]`) instead of synchronizing a second `useState` in an effect.
+  - `noteInputRef` is typed with `useRef<TextInputInstance>(null)` (importing `type TextInputInstance` from `'react-native'`) so `.focus()` is strictly type-safe under React Native 0.88.
+
+</details>
 
 ## Mini Project
 
@@ -216,7 +264,7 @@ Compare your work with the complete reference implementation:
 
 - [ ] Used `useState` functional updaters and lazy initializers
 - [ ] Wrote `useEffect` hooks with accurate dependency arrays and cleanup functions
-- [ ] Controlled a native `TextInput` with `useRef<TextInput | null>(null)`
+- [ ] Controlled a native `TextInput` with `useRef<TextInputInstance>(null)`
 - [ ] Understood when to use (and when to skip) `useMemo`, `useCallback`, and `useEffect`
 - [ ] Built reusable custom hooks (`useDebounce`, `useToggle`, `useStopwatch`)
 - [ ] Completed `./exercises/StopwatchExercise.tsx` and reviewed `./solutions/StopwatchSolution.tsx`

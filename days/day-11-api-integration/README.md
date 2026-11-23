@@ -15,6 +15,10 @@ By the end of Day 11, you will be able to:
 - Completed [Day 10: State Management](../day-10-state-management/README.md).
 - Comfortable with `async`/`await`, Promises, `FlatList`, and TypeScript generics.
 
+## Why This Concept Matters
+
+Almost every real mobile app—feeds, banking dashboards, chat apps, shopping carts—reads from and writes to remote APIs. Unlike a desktop browser plugged into stable fiber internet, a phone moves constantly between Wi-Fi, 5G, subway tunnels, and backgrounded states. Without proper request cancellation, normalized error handling, caching, and optimistic feedback, users hit duplicate requests, frozen spinners, lost taps, and unhelpful crash messages. Pairing a clean HTTP layer with **TanStack Query v5** is how production React Native teams make network-backed screens feel fast and dependable.
+
 ## Introduction
 
 Connecting a mobile app to a backend API is about far more than calling `fetch()` inside a `useEffect`. Mobile networks fluctuate between 5G, flaky Wi-Fi, elevators, and airplane mode. Users switch tabs mid-request, pull down to refresh, scroll through paginated feeds, and expect likes or new posts to appear instantaneously.
@@ -22,6 +26,16 @@ Connecting a mobile app to a backend API is about far more than calling `fetch()
 Writing manual `useEffect` + `isLoading` + `error` boilerplate in every screen leads to race conditions, duplicate network calls, and stale data. Today you will pair a clean, typed HTTP layer (`fetch` + `AbortController` and Axios interceptors) with **TanStack Query v5**—the industry standard for caching, synchronizing, and updating server state in React Native.
 
 ## Concepts
+
+> **React Web vs. Mobile Networking**
+>
+> | Concern | React Web (Browser) | React Native (iOS & Android) |
+> | --- | --- | --- |
+> | **Localhost Backend** | `http://localhost:3000` works directly | Works on iOS Simulator, but **Android Emulator uses `http://10.0.2.2:3000`**; physical devices require your machine's **LAN IP** (e.g., `http://192.168.1.42:3000`) or an HTTPS tunnel/deployed URL |
+> | **Manual Refresh** | Users click the browser reload button | Users expect native **pull-to-refresh** via `RefreshControl` on `FlatList` / `ScrollView` |
+> | **Network Reliability** | Usually stable Wi-Fi or Ethernet | Frequent cellular/Wi-Fi handoffs and dropouts—timeouts, retries, `AbortController`, and stale-while-revalidate caching are essential |
+> | **Transport Security** | Mixed HTTP/HTTPS warns in DevTools | iOS (ATS) and Android block cleartext `http://` in production builds by default—use **HTTPS** for real APIs |
+> | **CORS** | Enforced strictly by the browser | Native mobile HTTP stacks do **not** enforce browser CORS (though Expo Web previews still do) |
 
 ### 1. Built-in `fetch` with `AbortController` & Typed Responses
 
@@ -92,10 +106,10 @@ Every data-driven mobile screen should explicitly design for all four states:
 
 ## Code Examples
 
-Review both strictly typed examples for this day:
+Review both strictly typed examples for this day. You can preview interactive screens right away by running `npm start` in this repository's shared Expo launcher, or copy them into your own Expo project at the suggested paths below:
 
-1. **[examples/apiClient.ts](./examples/apiClient.ts)** — Custom `ApiError`, `normalizeApiError`, typed `fetchJson<T>` with `AbortController` timeout, Axios instance with auth/error interceptors, and paginated post helpers.
-2. **[examples/PostsFeedScreen.tsx](./examples/PostsFeedScreen.tsx)** — Full TanStack Query v5 feed with `useInfiniteQuery`, `RefreshControl`, Load More footer, loading/error/empty states, and optimistic post creation with rollback.
+1. **[examples/apiClient.ts](./examples/apiClient.ts)** — **Reusable helper/module** (place in `src/api/apiClient.ts` or `lib/apiClient.ts` in an Expo project). Contains the custom `ApiError` class, `normalizeApiError`, typed `fetchJson<T>` with `AbortController` timeout, Axios instance with auth/error interceptors, and paginated post helpers.
+2. **[examples/PostsFeedScreen.tsx](./examples/PostsFeedScreen.tsx)** — **Runnable screen component** (place in `app/feed.tsx` or `src/screens/PostsFeedScreen.tsx` in an Expo project, or preview via `npm start` in the shared Expo launcher). Full TanStack Query v5 feed with `useInfiniteQuery`, `RefreshControl`, Load More footer, loading/error/empty states, and optimistic post creation with rollback.
 
 ## Step-by-Step Explanation
 
@@ -105,8 +119,35 @@ Review both strictly typed examples for this day:
 4. **Distinguish pull-to-refresh from load-more spinners**: Passing `refreshing={isRefetching && !isFetchingNextPage}` to `RefreshControl` prevents the top spinner from activating while the user is loading the next page at the bottom of the list.
 5. **Guard indexed page access under `noUncheckedIndexedAccess`**: Before updating `current.pages[0]` during an optimistic update, check `const firstPage = current.pages[0]; if (!firstPage) return current;` so TypeScript strict mode stays happy and runtime crashes are impossible.
 
+## Expected Output
+
+When you run `PostsFeedScreen.tsx` with an active internet connection:
+
+1. **Initial load**: A centered blue `ActivityIndicator` appears with `"Loading posts…"`.
+2. **Loaded feed**: The screen renders a sticky header, scrollable post cards (10 per page), and a pagination footer:
+
+```text
++------------------------------------------+
+| Community Feed              [+ New Post] |
+| 10 posts cached                          |
++------------------------------------------+
+| [Card] Sunt Aut Facere Repellat...       |
+|        quia et suscipit suscipit...      |
++------------------------------------------+
+| [Card] Qui Est Esse                      |
+|        est rerum tempore vitae...        |
++------------------------------------------+
+|            [ Load More Posts ]           |
++------------------------------------------+
+```
+
+3. **Optimistic post**: Tapping **`+ New Post`** immediately inserts `"Learning TanStack Query v5 in React Native"` at the top of the list (before the network request finishes), displays a blue confirmation banner (`"Published new post!"`), and then re-syncs the cache.
+4. **Pagination & refresh**: Tapping **`Load More Posts`** fetches the next 10 posts until all 5 demo pages are loaded (`"You have reached the end of the feed."`). Pulling down refreshes the list in place with the native spinner.
+5. **Offline / error state**: Enabling Airplane Mode shows `"Unable to load feed"` with the normalized `ApiError` message and a **`Try Again`** button.
+
 ## Common Mistakes
 
+- **Using `localhost` on Android Emulator or Physical Devices**: Calling `http://localhost:3000` fails with a network error on Android Emulator (use `10.0.2.2`) and on real phones (use your machine's LAN IP or an HTTPS tunnel).
 - **Fetching Inside `useEffect` Without Cleanup/Cancellation**: Rapidly switching screens or typing in a search box can cause an older, slower request to resolve *after* a newer one and overwrite your UI with stale data. Use TanStack Query (or `AbortController` cleanup).
 - **Forgetting to Check `response.ok` With `fetch`**: A `404 Not Found` or `500 Internal Server Error` resolves the `fetch()` Promise normally! Always inspect `response.ok` before calling `response.json()`.
 - **Using Deprecated `cacheTime` or Missing `initialPageParam` in TanStack Query v5**: In v5, `cacheTime` was renamed to `gcTime`, `isPending` replaces initial `isLoading` semantics, and `useInfiniteQuery` requires `initialPageParam`.
@@ -136,9 +177,18 @@ Add a client-side search `TextInput` filtering cached users by `name` or `email`
 
 ## Solutions
 
-Compare your implementation against the complete reference solution:
+Try completing `UsersQueryExercise.tsx` on your own first before expanding the solution walkthrough below.
 
-- **[solutions/UsersQuerySolution.tsx](./solutions/UsersQuerySolution.tsx)** — Full TanStack Query v5 directory screen with `fetch` + `AbortSignal`, all four UI states, pull-to-refresh, local cache search filtering, and optimistic user creation with rollback.
+<details>
+<summary>Click to view solution notes & links</summary>
+
+- **[solutions/UsersQuerySolution.tsx](./solutions/UsersQuerySolution.tsx)** — Complete TanStack Query v5 directory screen demonstrating:
+  - `fetchUsers(signal)` forwarding TanStack Query's `AbortSignal` and throwing on `!response.ok`.
+  - All four async UI states (`isPending`, `isError` with Retry, `ListEmptyComponent`, and `RefreshControl` bound to `isRefetching`).
+  - Instant client-side search via `useMemo` filtering the cached `User[]` array with zero extra HTTP requests.
+  - Optimistic user creation with `cancelQueries`, cache snapshot in `onMutate`, rollback in `onError`, feedback banner in `onSuccess`, and `invalidateQueries` in `onSettled`.
+
+</details>
 
 ## Mini Project
 
@@ -151,6 +201,7 @@ Compare your implementation against the complete reference solution:
 ## Key Takeaways
 
 - Always check `response.ok` with `fetch` and pass `AbortSignal` so stale or timed-out requests cancel cleanly.
+- Remember mobile networking differences: Android Emulator uses `10.0.2.2` for local backends, real devices need a LAN IP or HTTPS URL, and users expect native pull-to-refresh.
 - Axios instances with request/response interceptors keep auth headers and `ApiError` normalization in one place.
 - TanStack Query v5 eliminates manual `useEffect` networking boilerplate while giving you caching (`staleTime`, `gcTime`), pagination (`useInfiniteQuery`), pull-to-refresh, and optimistic mutations (`useMutation`) out of the box.
 - Designing loading, error, empty, and refreshing states upfront turns flaky mobile networking into a resilient user experience.
@@ -165,6 +216,7 @@ Compare your implementation against the complete reference solution:
 ## Progress Checklist
 
 - [ ] Built a typed `fetch` wrapper with `AbortController` timeout and `response.ok` checking
+- [ ] Understood Web vs. Mobile networking differences (`10.0.2.2`, LAN IP, HTTPS, `RefreshControl`)
 - [ ] Configured an Axios instance with request and response interceptors and `ApiError` normalization
 - [ ] Connected `QueryClientProvider` and `useQuery` with structured query keys, `staleTime`, and `gcTime`
 - [ ] Implemented all four async UI states: loading, error + retry, empty, and pull-to-refresh

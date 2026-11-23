@@ -17,6 +17,10 @@ By the end of Day 05, you will be able to:
 - Comfortable creating typed functional components with `useState`.
 - Familiarity with basic CSS box model concepts (padding, margin, border) is helpful, though we explain every React Native difference from scratch.
 
+## Why This Concept Matters
+
+Mobile devices come in dozens of screen sizes, notch cutouts, pixel densities, orientations, and user-selected font scales—and most users expect crisp Light and Dark Mode support out of the box. Knowing React Native's Flexbox defaults, responsive `useWindowDimensions` breakpoints, semantic design tokens, platform-specific shadows, and `react-native-safe-area-context` ensures your UI looks polished and native on every iPhone, Android phone, foldable, and tablet.
+
 ## Introduction
 
 If you have styled web applications before, React Native styling will feel familiar yet subtly different. There are no `.css` files, no CSS cascade, and no pixel (`px`) or `rem` units. Instead, every component accepts a `style` prop powered by JavaScript objects and a fast native layout engine called **Yoga** (which implements Flexbox).
@@ -34,16 +38,20 @@ In React Native, you define styles with `StyleSheet.create(...)` at the bottom o
 - **No inheritance (except nested `<Text>`)**: Setting `color` on a `<View>` does *not* style child `<Text>` elements. Always apply text styles directly to `<Text>`.
 - **Style arrays**: Pass an array to combine base styles with conditional or theme overrides: `style={[styles.card, isSelected && styles.cardSelected]}`.
 
-### 2. Flexbox in React Native
+### 2. Flexbox & CSS (Web) vs. React Native Styles
 
-Flexbox is the primary layout system in React Native. Keep three key differences from web CSS in mind:
+Flexbox (powered by the native Yoga engine) is the primary layout system in React Native. If you have written web CSS before, keep this side-by-side comparison handy—it prevents 90% of early layout surprises:
 
-| Property | Web CSS Default | React Native Default |
+| Feature / Property | CSS (Web) | React Native Styles |
 | --- | --- | --- |
-| `flexDirection` | `'row'` | **`'column'`** |
-| `alignContent` | `'stretch'` | `'flex-start'` |
-| `flexShrink` | `1` | `0` |
-| `flex` | Shorthand (`grow shrink basis`) | Single number (ratio of available space) |
+| **Syntax & location** | `.css` files, `kebab-case`, `className` | `StyleSheet.create(...)`, `camelCase` JS objects, `style` prop |
+| **Units** | `px`, `rem`, `em`, `vh` / `vw` | **Unitless numbers** (`dp` on Android, `pt` on iOS) or `%` strings |
+| **Style cascading** | Styles inherit down the DOM tree | **No cascading** (except nested `<Text>` inside `<Text>`) |
+| **Shadows** | `box-shadow` across all browsers | **iOS:** `shadowColor`/`shadowOffset`/`shadowOpacity`/`shadowRadius`; **Android:** `elevation` |
+| **`flexDirection` default** | `'row'` | **`'column'`** (stacks vertically by default) |
+| **`alignContent` default** | `'stretch'` | `'flex-start'` |
+| **`flexShrink` default** | `1` | `0` |
+| **`flex` property** | Shorthand (`grow shrink basis`) | Single number (ratio of available space) |
 
 Key Flexbox properties you will use daily:
 
@@ -116,7 +124,12 @@ For accessibility, let `<Text>` scale with system font preferences by default (`
 
 ## Code Examples
 
+- **Preview immediately:** Run `npm start` from the repository root to open the shared Expo launcher and test `ResponsiveLayoutScreen` live—rotate your simulator or toggle Light/Dark Mode to watch the layout adapt in real time.
+
 ### Example 1: Reusable Design Tokens & Theme Helpers
+
+- **File:** [`./examples/ThemeTokens.ts`](./examples/ThemeTokens.ts) *(reusable TypeScript theme/helper module)*
+- **Where to place in an Expo project:** Put shared design tokens in `theme/ThemeTokens.ts` (or `src/theme/tokens.ts`) so every screen and component imports the same spacing, radii, typography, colors, and shadows.
 
 See [`./examples/ThemeTokens.ts`](./examples/ThemeTokens.ts) for a complete, strictly typed token system including spacing, radii, typography presets, light/dark color palettes, breakpoint detection, and cross-platform shadows.
 
@@ -139,6 +152,9 @@ export function getBreakpoint(width: number): 'compact' | 'medium' | 'expanded' 
 
 ### Example 2: Responsive, Theme-Aware Dashboard Screen
 
+- **File:** [`./examples/ResponsiveLayoutScreen.tsx`](./examples/ResponsiveLayoutScreen.tsx) *(runnable interactive screen component)*
+- **Where to place in an Expo project:** Drop it in `app/index.tsx` (or `screens/ResponsiveLayoutScreen.tsx` imported by a route), with `ThemeTokens.ts` alongside or in `theme/`.
+
 See [`./examples/ResponsiveLayoutScreen.tsx`](./examples/ResponsiveLayoutScreen.tsx) for a full runnable screen combining:
 
 - `SafeAreaProvider`, `SafeAreaView`, and `useSafeAreaInsets` from `react-native-safe-area-context`
@@ -155,6 +171,39 @@ Let's walk through how [`ResponsiveLayoutScreen.tsx`](./examples/ResponsiveLayou
 3. **Resolve Theme and Breakpoint**: `getThemeColors(activeMode)` returns the appropriate semantic palette (`background`, `surface`, `textPrimary`, `border`, `primary`), while `getBreakpoint(width)` picks `'compact'`, `'medium'`, or `'expanded'`.
 4. **Calculate Responsive Card Widths**: Using the screen width minus horizontal padding and gaps (`(width - horizontalPadding - totalGap) / columns`), each card fits neatly inside the `flexWrap: 'wrap'` grid without overflowing.
 5. **Apply Safe Bottom Scroll Padding**: Instead of clipping scroll content above the home indicator, `<SafeAreaView edges={['top', 'left', 'right']}>` handles the top and sides, while `ScrollView`'s `contentContainerStyle` applies `paddingBottom: Math.max(insets.bottom, spacing.lg)`.
+
+## Expected Output
+
+On a standard portrait phone (`width < 600 dp`, `compact` breakpoint), `ResponsiveLayoutScreen` renders a single-column scrollable dashboard safely below the status bar / Dynamic Island:
+
+```text
++--------------------------------------------+
+| Layout & Styling           [ Dark Mode ]   |
+| 390 x 844 dp • compact • ios               |
+|                                            |
+| +----------------------------------------+ |
+| | Adaptive Flexbox Grid                  | |
+| | Rotate the simulator or resize the     | |
+| | window... Current font scale: 1.00x.   | |
+| +----------------------------------------+ |
+|                                            |
+| +----------------------------------------+ |
+| | Lessons Completed                      | |
+| | 5 / 30                                 | |
+| | [ +1 today ]                           | |
+| +----------------------------------------+ |
+| +----------------------------------------+ |
+| | Active Streak                          | |
+| | 5 days                                 | |
+| | [ Personal best ]                      | |
+| +----------------------------------------+ |
+|                                            |
+| Safe Area Insets — top: 59px, bottom: 34px |
++--------------------------------------------+
+```
+
+- Rotating to landscape (`width >= 600 dp`, `medium`) automatically rearranges the 4 metric cards into a **2-column** grid; on wide tablets or desktop web (`width >= 900 dp`, `expanded`) all **4 cards** sit in a single horizontal row.
+- Tapping **Dark Mode / Light Mode** instantly switches the background, card surfaces, borders, text, and shadows between the light and dark palettes.
 
 ## Common Mistakes
 
@@ -192,13 +241,19 @@ Head to [`./exercises/README.md`](./exercises/README.md) and open [`./exercises/
 
 ## Solutions
 
-When you are ready to compare your implementation, review [`./solutions/PricingCardSolution.tsx`](./solutions/PricingCardSolution.tsx).
+Try styling and testing `PricingCardExercise.tsx` on both narrow and wide viewports before opening the reference notes below.
 
-Key highlights in the solution:
-- Semantic `LIGHT_THEME` and `DARK_THEME` palettes ensure strong contrast in both modes.
-- `getCardElevation(isDark)` encapsulates `Platform.select` cleanly with typed `ViewStyle`.
-- `maxWidth: 960` paired with `alignSelf: 'center'` prevents cards from stretching awkwardly on ultra-wide tablets.
-- `accessibilityState={{ selected }}` communicates toggle and plan selection state to screen readers.
+<details>
+<summary>Click to view solution notes &amp; links</summary>
+
+- [`./solutions/PricingCardSolution.tsx`](./solutions/PricingCardSolution.tsx): Complete responsive, Light/Dark theme-aware pricing screen with cross-platform shadows, safe area handling, and Monthly/Annual billing toggle.
+- **Key highlights to compare:**
+  - Semantic `LIGHT_THEME` and `DARK_THEME` palettes ensure strong contrast in both modes.
+  - `getCardElevation(isDark)` encapsulates `Platform.select` cleanly with typed `ViewStyle`.
+  - `maxWidth: 960` paired with `alignSelf: 'center'` prevents cards from stretching awkwardly on ultra-wide tablets.
+  - `accessibilityState={{ selected }}` communicates toggle and plan selection state to screen readers.
+
+</details>
 
 ## Mini Project
 

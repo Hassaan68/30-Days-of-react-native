@@ -5,7 +5,7 @@
 <h1 align="center">30 Days of React Native</h1>
 
 <p align="center">
-  <strong>A structured, 30-day open-source curriculum to master modern mobile development with React Native, Expo, and TypeScript — from your first screen to production app store releases.</strong>
+  <strong>A practical, 30-day open-source curriculum to master modern mobile development with React Native, Expo, and TypeScript — from your first native screen to production app store releases.</strong>
 </p>
 
 <p align="center">
@@ -18,27 +18,29 @@
 
 ---
 
-Inspired by [`asabeneh/30-days-of-python`](https://github.com/asabeneh/30-days-of-python), **30 Days of React Native** is a hands-on, step-by-step learning repository designed to take you from zero mobile experience to building, testing, and deploying production-ready iOS and Android apps with **React Native 0.88**, **Expo SDK 58**, **Expo Router**, and **strict TypeScript**.
+Inspired by [`asabeneh/30-days-of-python`](https://github.com/asabeneh/30-days-of-python), **30 Days of React Native** is a hands-on, structured learning repository built around **React Native 0.88**, **Expo SDK 58**, **Expo Router**, and **strict TypeScript**.
 
-Every single day includes a complete tutorial, runnable TypeScript code examples, beginner-to-challenge exercises, full solutions, and a mini project.
+Each day focuses on one practical skill with plain-English explanations, React Web vs. React Native comparisons, runnable TypeScript examples, progressive exercises with acceptance criteria and collapsible hints, complete solutions, and a mini project.
 
 ---
 
 ## Table of Contents
 
-- [Who This Project Is For](#who-this-project-is-for)
-- [Why Use 30 Days of React Native?](#why-use-30-days-of-react-native)
+- [Who Should Use This Repository](#who-should-use-this-repository)
+- [What You Will Achieve](#what-you-will-achieve)
 - [Verified Technology Stack](#verified-technology-stack)
-- [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
-  - [Clone the Repository](#clone-the-repository)
-  - [Install Dependencies](#install-dependencies)
-  - [How to Run Examples and Validation](#how-to-run-examples-and-validation)
+- [Prerequisites and Required Tools](#prerequisites-and-required-tools)
+- [How to Start](#how-to-start)
+  - [1. Clone and Install](#1-clone-and-install)
+  - [2. Run Examples in the Shared Expo Workspace](#2-run-examples-in-the-shared-expo-workspace)
+  - [3. Run Type, Lint, and Curriculum Checks](#3-run-type-lint-and-curriculum-checks)
+- [Learning Milestones](#learning-milestones)
 - [30-Day Learning Roadmap](#30-day-learning-roadmap)
+- [How to Practise Every Day](#how-to-practise-every-day)
+- [Featured Projects and How to Complete Them](#featured-projects-and-how-to-complete-them)
 - [Learning Progress Tracker](#learning-progress-tracker)
 - [Daily Progress Checklist](#daily-progress-checklist)
 - [Beginner-to-Advanced Learning Paths](#beginner-to-advanced-learning-paths)
-- [Featured Projects](#featured-projects)
 - [Technologies Covered](#technologies-covered)
 - [Repository Documentation](#repository-documentation)
 - [Official Documentation Links](#official-documentation-links)
@@ -50,117 +52,130 @@ Every single day includes a complete tutorial, runnable TypeScript code examples
 
 ---
 
-## Who This Project Is For
+## Who Should Use This Repository
 
-- **JavaScript and TypeScript developers** who want to build native iOS and Android mobile apps without starting from scratch in Swift and Kotlin.
-- **React web developers** transitioning to React Native, Expo Router, mobile gestures, native APIs, and app store deployment.
-- **Self-taught learners and students** looking for a clear, structured daily routine with real exercises, solutions, and portfolio-grade projects.
-- **Professional engineers** wanting an up-to-date reference for React Native's New Architecture, Expo SDK 58, TanStack Query, Zustand, Reanimated, testing, accessibility, and EAS CI/CD.
+- **JavaScript or TypeScript developers** who want to build native iOS and Android apps without learning Swift and Kotlin from scratch.
+- **React web developers** transitioning from the browser DOM and CSS to React Native components, Flexbox, Expo Router, gestures, and native device APIs.
+- **Beginners with basic programming experience** looking for a clear, progressive daily curriculum with real practice exercises and complete solutions.
+- **Experienced developers** who want an up-to-date, strict-TypeScript reference for React Native 0.88, Expo SDK 58, testing, accessibility, offline storage, security, and EAS deployment.
 
 ---
 
-## Why Use 30 Days of React Native?
+## What You Will Achieve
 
-- **Modern from Day 1:** Built around the official React Native recommendation — **Expo**, **Expo Router**, **TypeScript**, and the **New Architecture**. Zero deprecated APIs (`SafeAreaView` from `react-native`, legacy bridge hacks, or outdated navigation patterns are avoided and explicitly explained).
-- **Learn by building:** Every day ends with three progressive exercises (Beginner, Intermediate, Challenge) plus a mini project, culminating in **5 featured mobile applications**.
-- **Production practices included:** Goes far beyond "Hello World" to cover secure storage, offline SQLite sync, accessibility (VoiceOver & TalkBack), unit/component testing with Jest & React Native Testing Library, performance profiling, and App Store / Google Play deployment via EAS.
-- **Verified code quality:** Repository examples, exercises, and solutions are written in strict TypeScript and validated with automated curriculum, link, type, lint, and Jest test checks.
+By working through the 30 days and 5 featured projects, you will be able to:
+
+- Build responsive, theme-aware iOS and Android interfaces using modern React Native components, Flexbox, and `react-native-safe-area-context`.
+- Structure multi-screen navigation (Stacks, Tabs, Nested Layouts, Dynamic Routes, Deep Linking) with **Expo Router**.
+- Handle real-world app features: validated forms (**React Hook Form + Zod**), client/server state (**Zustand + TanStack Query**), secure authentication (**`expo-secure-store`**), device hardware (Camera, Location, Haptics, Notifications), and offline persistence (**SQLite + AsyncStorage**).
+- Apply professional engineering practices: UI-thread animations (**Reanimated**), `FlatList` optimization, accessibility (VoiceOver & TalkBack), security hygiene, automated testing (**Jest + React Native Testing Library**), and App Store / Google Play deployment via **EAS**.
 
 ---
 
 ## Verified Technology Stack
 
-All versions and official recommendations in this repository were verified against official documentation on **November 23, 2026**:
+Versions and official API recommendations were verified against official documentation on **November 23, 2026**:
 
 | Technology | Version | Notes |
 | --- | --- | --- |
 | **Expo SDK** | `~58.0.0` | Latest stable SDK (released October 15, 2026) |
 | **React Native** | `0.88.0` | New Architecture & Strict TypeScript API enabled by default |
 | **React** | `19.3.0` | Compatible React release bundled with RN 0.88 |
-| **Expo Router** | `~58.0.0` | Unified SDK versioning; file-based routing, native tabs & loaders |
+| **Expo Router** | `~58.0.0` | Unified SDK versioning; file-based routing in `app/` |
 | **TypeScript** | `~5.8.3` | Strict mode + `noUncheckedIndexedAccess` |
 | **Node.js** | `22.13+` / `24.3+` (LTS) | Required by Expo SDK 58 tooling (`.nvmrc` targets Node `24`) |
-| **Testing** | `jest-expo ~58.0.0` + `@testing-library/react-native` | Official Expo testing setup |
+| **Testing** | `jest-expo ~58.0.0` + `@testing-library/react-native` | Official Expo testing ecosystem |
 | **Linting** | ESLint v9 Flat Config + Prettier | Modern `eslint.config.js` format |
 
-See [docs/ROADMAP.md](./docs/ROADMAP.md) for the full list of deprecated APIs avoided and modern replacements used throughout this curriculum.
+See [docs/ROADMAP.md](./docs/ROADMAP.md) for the full list of deprecated APIs avoided (such as `SafeAreaView` from `react-native`, `expo-av`, and legacy bridge patterns) and their modern replacements.
 
 ---
 
-## Prerequisites
+## Prerequisites and Required Tools
 
-Before starting Day 01, you should have:
+Before starting Day 01, prepare:
 
-- Basic familiarity with programming fundamentals (variables, functions, loops, conditionals).
-- Comfort using a terminal / command line and Git.
-- A code editor such as [Visual Studio Code](https://code.visualstudio.com/).
-- **Node.js 22.13+ or 24.3+ (LTS)** installed (see [docs/SETUP.md](./docs/SETUP.md) for macOS, Windows, and Linux setup).
-- An iOS or Android phone with the **Expo Go** app installed, or Xcode (macOS) / Android Studio for simulators and emulators.
-
-> **New to TypeScript or React?** No problem — [Day 02](./days/day-02-javascript-typescript/README.md), [Day 03](./days/day-03-react-fundamentals/README.md), and [Day 04](./days/day-04-react-hooks/README.md) teach all the JavaScript, TypeScript, and React fundamentals you need for mobile development.
+- **Basic programming knowledge** (variables, functions, conditionals, arrays/objects). New to TypeScript or React? [Days 02–04](./days/day-02-javascript-typescript/README.md) teach everything you need.
+- **Node.js 22.13+ or 24.3+ (LTS)** and **Git** (see [docs/SETUP.md](./docs/SETUP.md) for macOS, Windows, and Linux steps).
+- **Code editor:** [Visual Studio Code](https://code.visualstudio.com/) (or your preferred TypeScript IDE).
+- **Device or emulator:** An iOS or Android phone with the free **Expo Go** app installed, or Xcode (macOS) / Android Studio for local simulators and emulators. No paid tools are required to complete this course.
 
 ---
 
-## Getting Started
+## How to Start
 
-### Clone the Repository
-
-```bash
-git clone https://github.com/your-username/30-days-of-react-native.git
-cd 30-days-of-react-native
-```
-
-### Install Dependencies
-
-Make sure you are using Node.js 22.13+ or 24.3+ (if you use `nvm`, run `nvm use`):
+### 1. Clone and Install
 
 ```bash
+git clone https://github.com/Hassaan68/30-Days-of-react-native.git
+cd 30-Days-of-react-native
+
+# Use Node 24 LTS if you have nvm or fnm installed
+nvm use || fnm use
+
 npm install
 ```
 
-### How to Run Examples and Validation
+### 2. Run Examples in the Shared Expo Workspace
 
-This repository is structured as a **learning workspace**. To run any daily example or featured project on a real phone or simulator, create a fresh practice Expo app alongside your learning or copy a screen into an Expo Router route:
+This repository includes a lightweight **shared Expo Router launcher** inside [`app/`](./app) (`app/_layout.tsx`, `app/index.tsx`, `app/preview/[id].tsx`) so you can run interactive lesson examples and featured project screens live on your phone or simulator without creating 30 separate projects:
 
 ```bash
-# Create your personal playground app with the latest Expo template
-npx create-expo-app@latest rn-playground
-cd rn-playground
+npm start
+```
+
+- Scan the QR code with **Expo Go** on your phone, or press **`i`** (iOS Simulator) / **`a`** (Android Emulator).
+- Use the search bar on the home screen to filter by day number, topic, or project, then tap any card to run that screen live.
+
+When you want to build a standalone app from scratch (for example, during [Day 01](./days/day-01-introduction/README.md) or any featured project), scaffold a clean app anytime with:
+
+```bash
+npx create-expo-app@latest my-rn-app
+cd my-rn-app
 npx expo start
 ```
 
-Inside this repository, you can also run built-in developer and validation scripts:
+### 3. Run Type, Lint, and Curriculum Checks
 
 ```bash
 # Check your daily progress from the checklist below
 npm run progress
 
-# Run TypeScript type checking across all examples, exercises, solutions, and projects
+# Run strict TypeScript checking across app/, src/, days/, and projects/
 npm run typecheck
 
 # Run ESLint across the repository
 npm run lint
 
-# Run automated Jest & React Native Testing Library tests
-npm test
-
 # Verify all 30 daily folders, required sections, and internal Markdown links
 npm run validate:curriculum
 npm run validate:links
-
-# Run all checks together
-npm run validate:all
 ```
 
-For complete OS-specific setup (macOS, Windows, Linux, iOS Simulator, Android Emulator, and Expo Go vs Development Builds), read [docs/SETUP.md](./docs/SETUP.md).
+For full OS-specific setup (macOS, Windows, Linux, iOS Simulator, Android Emulator, physical devices, and Expo Go vs. Development Builds), read [docs/SETUP.md](./docs/SETUP.md).
+
+---
+
+## Learning Milestones
+
+The 30 days are organized into three clear milestones that build progressively from core primitives to production engineering:
+
+### Days 1–7: React Native Foundations & Basic Screens
+Learn how React Native and Expo work, strengthen TypeScript and React Hooks fundamentals, master Flexbox layout, theming, safe areas, and core UI components, and ship your first multi-screen **Profile App**.
+
+### Days 8–14: Navigation, Forms, APIs & Application State
+Build realistic mobile user flows with **Expo Router** (Stacks, Tabs, dynamic routes, deep links), validated forms (**React Hook Form + Zod**), client & server state (**Context, Zustand, TanStack Query**), secure authentication (**`expo-secure-store`**), native device features, and a live **Weather App**.
+
+### Days 15–30: Advanced Development, Testing, Performance, Security & Production
+Level up to professional mobile engineering: UI-thread animations (**Reanimated & Gesture Handler**), `FlatList` performance profiling, offline-first **SQLite** storage, scalable feature-based architecture, native modules & config plugins, automated testing (**Jest & RNTL**), accessibility, mobile security, debugging, notifications, real-time WebSockets, **EAS CI/CD**, a **Task Manager**, and the **PulseTrack** production capstone.
 
 ---
 
 ## 30-Day Learning Roadmap
 
-Click any day to open its full tutorial, code examples, exercises, and solutions.
+Click any day to open its full tutorial, runnable examples, exercises, and solutions.
 
-### Week 1: Foundations
+### Milestone 1 — Days 1–7: Foundations & Basic Screens
 
 | Day | Topic | Level | Status |
 | --- | --- | --- | --- |
@@ -172,7 +187,7 @@ Click any day to open its full tutorial, code examples, exercises, and solutions
 | [06](./days/day-06-core-components/README.md) | Core React Native Components | Beginner | Not started |
 | [07](./days/day-07-first-mobile-app/README.md) | Build Your First Mobile App (Profile App) | Beginner | Not started |
 
-### Week 2: Real Mobile Development
+### Milestone 2 — Days 8–14: Navigation, Forms, APIs & App State
 
 | Day | Topic | Level | Status |
 | --- | --- | --- | --- |
@@ -184,7 +199,7 @@ Click any day to open its full tutorial, code examples, exercises, and solutions
 | [13](./days/day-13-device-features/README.md) | Device Features (Camera, Location, Haptics & More) | Intermediate | Not started |
 | [14](./days/day-14-weather-app/README.md) | Build a Weather App | Intermediate | Not started |
 
-### Week 3: Advanced React Native
+### Milestone 3 — Days 15–30: Advanced, Testing, Performance, Security & Production
 
 | Day | Topic | Level | Status |
 | --- | --- | --- | --- |
@@ -195,11 +210,6 @@ Click any day to open its full tutorial, code examples, exercises, and solutions
 | [19](./days/day-19-native-modules-and-platform-differences/README.md) | Native Modules and Platform Differences | Advanced | Not started |
 | [20](./days/day-20-testing/README.md) | Testing (Jest & React Native Testing Library) | Advanced | Not started |
 | [21](./days/day-21-task-manager/README.md) | Build a Task Manager | Advanced | Not started |
-
-### Week 4: Production and Professional Development
-
-| Day | Topic | Level | Status |
-| --- | --- | --- | --- |
 | [22](./days/day-22-accessibility/README.md) | Accessibility (VoiceOver, TalkBack & Inclusive UI) | Professional | Not started |
 | [23](./days/day-23-security/README.md) | Mobile Security Best Practices | Professional | Not started |
 | [24](./days/day-24-debugging-and-devtools/README.md) | Debugging and Developer Tools | Professional | Not started |
@@ -212,22 +222,46 @@ Click any day to open its full tutorial, code examples, exercises, and solutions
 
 ---
 
+## How to Practise Every Day
+
+Follow this simple 4-step daily loop (~60–120 minutes per day):
+
+1. **Read & Understand (20–30 min):** Open `days/day-XX-.../README.md`, read why the concept matters, study the concepts and React Web vs. React Native notes, and review the expected output.
+2. **Run & Tinker (15 min):** Launch the day's interactive example with `npm start` (or inspect the helper module in `examples/`), change a prop or style, and watch Fast Refresh update your phone instantly.
+3. **Solve Independently (30–50 min):** Open `days/day-XX-.../exercises/README.md` and implement the **Beginner**, **Intermediate**, and **Challenge** tasks inside the starter file. Check your work against the **Acceptance Criteria** and run `npm run typecheck && npm run lint`. Only open the collapsible **Hints** if you get stuck.
+4. **Compare & Consolidate (15 min):** Open `solutions/` *after* trying the exercises yourself, compare trade-offs, build the **Mini Project**, and check off the day in your progress checklist.
+
+---
+
+## Featured Projects and How to Complete Them
+
+Build five real-world applications in [`projects/`](./projects) at key milestones. Each project guide includes features, screens, folder structure, step-by-step build instructions, working TypeScript source files, testing instructions, and extension ideas:
+
+| # | Project | Best Completed After | Focus Areas | Guide |
+| --- | --- | --- | --- | --- |
+| 01 | **Profile App** | Day 07 | Flexbox, themes, reusable components, safe areas | [View Project 01](./projects/project-01-profile-app/README.md) |
+| 02 | **Weather App** | Day 14 | Open-Meteo API (no key needed), search, GPS, refresh | [View Project 02](./projects/project-02-weather-app/README.md) |
+| 03 | **Task Manager** | Day 21 | Zustand, AsyncStorage persistence, CRUD, filtering, tests | [View Project 03](./projects/project-03-task-manager/README.md) |
+| 04 | **Authentication App** | Day 12 / 23 | SecureStore, React Hook Form + Zod, protected sessions | [View Project 04](./projects/project-04-authentication-app/README.md) |
+| 05 | **PulseTrack (Production App)** | Day 29 | Feature-based architecture, offline storage, a11y, error boundaries & tests | [View Project 05](./projects/project-05-production-mobile-app/README.md) |
+
+**How to complete a project:** Preview the reference screen in the shared Expo launcher (`npm start`), read the project's `README.md`, scaffold a fresh Expo app with `npx create-expo-app@latest`, build each screen step by step using the guide, and add at least one feature from the **Future Improvements** section to make it uniquely yours for your portfolio.
+
+---
+
 ## Learning Progress Tracker
 
-Track your milestone progress across the four weeks. Update your fork as you finish each week, or run `npm run progress` in your terminal to render a progress bar from your checklist!
+Track your milestone progress across the curriculum. Fork the repository, check off completed days below, and run `npm run progress` in your terminal to display a live progress bar!
 
-| Week | Focus Area | Capstone Milestone | Progress |
+| Milestone | Days | Capstone Project | Progress |
 | --- | --- | --- | --- |
-| **Week 1** | Foundations & Mobile UI | [Project 01: Profile App](./projects/project-01-profile-app/README.md) | `0 / 7 days` |
-| **Week 2** | Navigation, Data & Device APIs | [Project 02: Weather App](./projects/project-02-weather-app/README.md) | `0 / 7 days` |
-| **Week 3** | Performance, Architecture & Testing | [Project 03: Task Manager](./projects/project-03-task-manager/README.md) | `0 / 7 days` |
-| **Week 4** | Production, Security & Deployment | [Project 05: Production App](./projects/project-05-production-mobile-app/README.md) | `0 / 9 days` |
+| **Milestone 1: Foundations** | Days 01–07 | [Project 01: Profile App](./projects/project-01-profile-app/README.md) | `0 / 7 days` |
+| **Milestone 2: Real Mobile Dev** | Days 08–14 | [Project 02: Weather App](./projects/project-02-weather-app/README.md) | `0 / 7 days` |
+| **Milestone 3: Advanced & Production** | Days 15–30 | [Project 03](./projects/project-03-task-manager/README.md) & [Project 05](./projects/project-05-production-mobile-app/README.md) | `0 / 16 days` |
 
 ---
 
 ## Daily Progress Checklist
-
-Fork this repository and check off each day as you complete its tutorial, exercises, and mini project. Run `npm run progress` anytime to check your completion percentage.
 
 <details>
 <summary><strong>Click to expand your 30-Day Progress Checklist</strong></summary>
@@ -269,28 +303,14 @@ Fork this repository and check off each day as you complete its tutorial, exerci
 
 ## Beginner-to-Advanced Learning Paths
 
-Not everyone starts from the same baseline. Choose the path that fits your background (full details in [docs/LEARNING_PATH.md](./docs/LEARNING_PATH.md)):
+Choose the pace that matches your background (full details in [docs/LEARNING_PATH.md](./docs/LEARNING_PATH.md)):
 
 | Track | Best For | Recommended Route |
 | --- | --- | --- |
 | **Complete Beginner** | New to React and mobile development | Follow **Days 01 → 30** sequentially (~1.5–2 hours/day) |
 | **React Web Developer** | Comfortable with React & TypeScript on the web | Skim Days 02–04, focus on **Days 01, 05–29** |
-| **14-Day Fast Track** | Engineers needing to ship an Expo MVP quickly | Days 01, 05–14, 17–18, 20, 23, 27–29 |
+| **14-Day Fast Track** | Engineers shipping an Expo MVP quickly | Days 01, 05–14, 17–18, 20, 23, 27–29 |
 | **Production Readiness** | Intermediate RN devs leveling up to Senior | Days 15–30 + [Project 05](./projects/project-05-production-mobile-app/README.md) |
-
----
-
-## Featured Projects
-
-Apply what you learn by building five portfolio-ready applications in [`projects/`](./projects):
-
-| # | Project | Focus Areas | Guide |
-| --- | --- | --- | --- |
-| 01 | **Profile App** | Flexbox, themes, reusable components, safe areas | [View Project 01](./projects/project-01-profile-app/README.md) |
-| 02 | **Weather App** | Open-Meteo API, city search, geolocation, pull-to-refresh | [View Project 02](./projects/project-02-weather-app/README.md) |
-| 03 | **Task Manager** | Zustand, AsyncStorage persistence, CRUD, filtering, Jest tests | [View Project 03](./projects/project-03-task-manager/README.md) |
-| 04 | **Authentication App** | SecureStore, React Hook Form + Zod, protected routes, sessions | [View Project 04](./projects/project-04-authentication-app/README.md) |
-| 05 | **PulseTrack (Production App)** | Full feature-based architecture, offline storage, a11y, error boundaries & tests | [View Project 05](./projects/project-05-production-mobile-app/README.md) |
 
 ---
 
@@ -300,7 +320,7 @@ Apply what you learn by building five portfolio-ready applications in [`projects
 - **Navigation:** Expo Router (Stack, Tabs, Nested Layouts, Dynamic Routes, Deep Linking)
 - **Forms & Validation:** React Hook Form, Zod v4, `@hookform/resolvers`
 - **State & Data:** Context API, Zustand v5, Fetch, Axios, TanStack Query v5, WebSockets
-- **UI, Motion & Media:** StyleSheet, Flexbox, `react-native-safe-area-context`, Reanimated, Gesture Handler, `expo-image`
+- **UI, Motion & Media:** StyleSheet, Flexbox, `react-native-safe-area-context`, Animated API, Reanimated, Gesture Handler, `expo-image`
 - **Storage & Device APIs:** AsyncStorage, `expo-secure-store`, `expo-sqlite`, `expo-camera`, `expo-image-picker`, `expo-location`, `expo-notifications`, `expo-haptics`, `expo-clipboard`, `expo-sharing`
 - **Quality & Shipping:** Jest, `jest-expo`, React Native Testing Library, ESLint Flat Config, Prettier, EAS Build, EAS Submit, EAS Update, GitHub Actions
 
@@ -311,7 +331,7 @@ Apply what you learn by building five portfolio-ready applications in [`projects
 - [Roadmap & Verified Versions](./docs/ROADMAP.md) — Curriculum breakdown, verified package matrix, and deprecated APIs avoided
 - [Learning Paths](./docs/LEARNING_PATH.md) — Tailored schedules for beginners, React web devs, and experienced engineers
 - [Environment Setup](./docs/SETUP.md) — macOS, Windows, Linux, iOS Simulator, Android Emulator, and physical devices
-- [Troubleshooting Guide](./docs/TROUBLESHOOTING.md) — Metro errors, clearing caches, SDK upgrades, TypeScript errors, and RN Directory
+- [Troubleshooting Guide](./docs/TROUBLESHOOTING.md) — Metro errors, clearing caches, SDK upgrades, RN 0.88 TypeScript fixes, and RN Directory
 - [Glossary](./docs/GLOSSARY.md) — Plain-English definitions of React Native & Expo terminology
 - [Resources](./docs/RESOURCES.md) — Curated official docs, libraries, tools, and communities
 - [FAQ](./docs/FAQ.md) — Answers to common questions
@@ -336,19 +356,19 @@ Apply what you learn by building five portfolio-ready applications in [`projects
 <details>
 <summary><strong>Do I need a Mac to follow this course?</strong></summary>
 
-No! You can follow nearly the entire curriculum on **Windows, macOS, or Linux** using an Android Emulator or a physical iPhone/Android device with Expo Go. When you are ready to build an iOS binary for the App Store, **EAS Build** compiles iOS apps in the cloud without requiring a Mac.
+No. You can follow the curriculum on **Windows, macOS, or Linux** using an Android Emulator or a physical iPhone/Android device with Expo Go. When you are ready to build an iOS binary for the App Store, **EAS Build** compiles iOS apps in the cloud without requiring a Mac.
 </details>
 
 <details>
 <summary><strong>Why does this course use Expo instead of the bare React Native CLI?</strong></summary>
 
-The React Native core team officially recommends starting every new React Native project with a framework like **Expo**. Expo provides file-based routing, first-class TypeScript support, native modules, Continuous Native Generation (CNG), and cloud builds — and you still have full access to native Swift and Kotlin code whenever you need it.
+The React Native core team officially recommends starting new React Native projects with a framework like **Expo**. Expo provides file-based routing, first-class TypeScript support, maintained native modules, Continuous Native Generation (CNG), and cloud builds—while still giving you full access to custom Swift and Kotlin native code whenever you need it.
 </details>
 
 <details>
 <summary><strong>How much time should I spend each day?</strong></summary>
 
-Plan for **60–120 minutes per day**: ~25 minutes reading the concepts and code walkthrough, ~35–60 minutes completing the three exercises, and ~20–35 minutes building the mini project. Go at your own pace — consistency beats speed.
+Plan for **60–120 minutes per day**: ~25 minutes reading concepts and expected output, ~35–60 minutes solving exercises independently, and ~20–35 minutes building the mini project. Go at your own pace—consistency beats speed.
 </details>
 
 Read more answers in [docs/FAQ.md](./docs/FAQ.md).
@@ -357,12 +377,11 @@ Read more answers in [docs/FAQ.md](./docs/FAQ.md).
 
 ## Contributing
 
-Contributions from learners and experienced mobile engineers alike make this resource better for everyone! You can help by:
+Contributions from learners and experienced mobile engineers make this curriculum better for everyone! You can help by:
 
-- Fixing typos or clarifying explanations that felt confusing while learning
-- Improving TypeScript examples or adding edge-case tests
-- Adding new exercises or mini-project ideas
-- Translating tutorials into other languages
+- Clarifying explanations that felt confusing while learning
+- Fixing typos, broken links, or outdated snippets
+- Adding new exercises, edge-case tests, or translations
 - Keeping lessons aligned with future Expo SDK and React Native releases
 
 Please read [CONTRIBUTING.md](./CONTRIBUTING.md) and our [Code of Conduct](./CODE_OF_CONDUCT.md) before opening a pull request.
@@ -381,7 +400,7 @@ Please read [CONTRIBUTING.md](./CONTRIBUTING.md) and our [Code of Conduct](./COD
 
 ## Support This Repository
 
-If **30 Days of React Native** helps you learn mobile development or build your next app:
+If **30 Days of React Native** helps you learn mobile development or ship your next app:
 
 - **Star this repository** on GitHub so more developers can discover it.
 - **Share your daily progress** (`#30DaysOfReactNative`) and showcase the 5 projects you build.

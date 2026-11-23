@@ -18,6 +18,10 @@ By the end of Day 02, you will be able to:
 - Completed [Day 01: Introduction to React Native and Expo](../day-01-introduction/README.md).
 - Basic familiarity with variables, loops, and conditionals in any programming language.
 
+## Why This Concept Matters
+
+Every screen in a production mobile app transforms API payloads, updates lists immutably, handles loading and error states, and waits on async device APIs (storage, camera, location, networking). On mobile, a single unchecked `undefined` property access doesn't just fail quietly in a console—it can crash the entire native app back to the user's home screen. Mastering immutable JavaScript patterns and strict TypeScript today pays off in every single lesson from Day 03 through Day 30.
+
 ## Introduction
 
 React Native 0.88 enables its **Strict TypeScript API** by default, and Expo SDK 58 templates ship with TypeScript configured out of the box. Why? On the web, a crash in one widget might just log an error in the browser console; on mobile, an unhandled `undefined is not an object` error can crash the entire native app to the home screen.
@@ -140,12 +144,19 @@ function getFirstTitle(titles: readonly string[]): string {
 
 Checking for `undefined` before accessing properties prevents one of the most common mobile app crash categories.
 
+> **React Web vs. React Native (TypeScript Mindset):** In React Web, you often interact with forgiving browser globals (`window`, DOM elements) where a failed widget may only log a console error. In **React Native 0.88**, the **Strict TypeScript API** is enabled by default, native platform APIs are strictly typed, and an unhandled runtime exception in JS can terminate the whole mobile app—making strict null checks, `noUncheckedIndexedAccess`, and discriminated unions essential daily habits.
+
 ## Code Examples
 
-Explore both example files in `./examples/`:
+Both files below are **reusable TypeScript helper modules** (pure logic with no React UI).
 
-1. [`./examples/typescriptBasics.ts`](./examples/typescriptBasics.ts) — Demonstrates interfaces, type aliases, immutable updates, `map`/`filter`/`reduce`, destructuring, spread/rest, and safe indexing under `noUncheckedIndexedAccess`.
-2. [`./examples/asyncAndGenerics.ts`](./examples/asyncAndGenerics.ts) — Demonstrates generics (`ApiResponse<T>`, `AsyncState<T>`, `groupBy<T, K>`), discriminated union exhaustiveness checks, Promises, and `async`/`await` with `try`/`catch`.
+- **Where to place in an Expo project:** Put pure logic and domain types inside `src/utils/` or `lib/` (for example, `src/utils/lessons.ts` or `src/types/asyncState.ts`), then import them into your screens under `app/`.
+- **How to run and verify:** Run `npm run typecheck` and `npm run lint` from the repository root to verify strict type checking, or import any exported helper into a screen and preview it live via `npm start` in this repository's shared Expo launcher.
+
+Explore both modules in `./examples/`:
+
+1. [`./examples/typescriptBasics.ts`](./examples/typescriptBasics.ts) *(reusable TypeScript module)* — Demonstrates interfaces, type aliases, immutable updates, `map`/`filter`/`reduce`, destructuring, spread/rest, and safe indexing under `noUncheckedIndexedAccess`.
+2. [`./examples/asyncAndGenerics.ts`](./examples/asyncAndGenerics.ts) *(reusable TypeScript module)* — Demonstrates generics (`ApiResponse<T>`, `AsyncState<T>`, `groupBy<T, K>`), discriminated union exhaustiveness checks, Promises, and `async`/`await` with `try`/`catch`.
 
 Here is a highlight from [`./examples/asyncAndGenerics.ts`](./examples/asyncAndGenerics.ts):
 
@@ -181,6 +192,29 @@ export function describeAsyncState<T>(
 4. **Safe Indexed Access:** `getNextLesson` accesses `remaining[0]` and explicitly handles the `undefined` case because `noUncheckedIndexedAccess` is enabled.
 5. **Typed Async Fetching & Generics:** In `asyncAndGenerics.ts`, `fetchLessonById` returns `Promise<ApiResponse<LessonSummary>>`. Using `unknown` in `catch (error: unknown)` and narrowing with `error instanceof Error` keeps error handling 100% type-safe without `any`.
 
+## Expected Output
+
+Because Day 02's examples are pure TypeScript modules, you verify them through return values, unit tests, and the TypeScript compiler rather than a visual screen. Calling the exported helpers with `SAMPLE_LESSONS` produces:
+
+```text
+formatLessonLabel(SAMPLE_LESSONS[0])
+  -> "Lesson [day-01]: Introduction to React Native and Expo (45 min)"
+
+getIncompleteLessonTitles(SAMPLE_LESSONS)
+  -> ["JavaScript and TypeScript for React Native", "React Fundamentals", "Animations with Reanimated"]
+
+getTotalCompletedMinutes(SAMPLE_LESSONS)
+  -> 45
+
+await fetchLessonById('02')
+  -> { ok: true, data: { id: '02', title: 'JavaScript and TypeScript', track: 'foundations' } }
+
+await fetchLessonById('')
+  -> { ok: false, errorMessage: 'Lesson ID cannot be empty.' }
+```
+
+Running `npm run typecheck` and `npm run lint` from the repository root should finish cleanly with **0 errors**.
+
 ## Common Mistakes
 
 1. **Using `any` to silence compiler errors:** `any` disables type checking everywhere it spreads. Use explicit interfaces, generics `<T>`, or `unknown` (with narrowing) instead.
@@ -211,9 +245,18 @@ Implement the generic function `pluck<T, K extends keyof T>(items: readonly T[],
 
 ## Solutions
 
-After attempting the challenges, review the reference solution:
+Attempt every function in `./exercises/typeChallenges.ts` and run `npm run typecheck` before checking the reference walkthrough below.
+
+<details>
+<summary>Click to view solution notes &amp; links</summary>
 
 - [`./solutions/typeChallengesSolution.ts`](./solutions/typeChallengesSolution.ts): Strictly typed implementations of every Beginner, Intermediate, and Challenge function with zero `any` and full `noUncheckedIndexedAccess` safety.
+- **Key details to compare:**
+  - `formatUserGreeting` destructures `{ displayName = 'Learner', streakDays } = profile` so omitted `displayName` falls back cleanly.
+  - `toggleTaskById` uses `tasks.map(...)` + `{ ...task, completed: !task.completed }` so the input `readonly Task[]` is never mutated.
+  - `fetchTaskSafely` validates `Number.isInteger(index) && index >= 0`, checks `if (task === undefined)` for `noUncheckedIndexedAccess`, and narrows caught `error: unknown` with `error instanceof Error`.
+
+</details>
 
 ## Mini Project
 

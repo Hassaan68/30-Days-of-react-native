@@ -220,8 +220,8 @@ eas build --profile development --platform all
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/30days-of-react-native.git
-cd 30days-of-react-native
+git clone https://github.com/Hassaan68/30-Days-of-react-native.git
+cd 30-Days-of-react-native
 
 # 2. Switch to Node 24 LTS (if using nvm or fnm)
 nvm use || fnm use
@@ -229,15 +229,28 @@ nvm use || fnm use
 # 3. Install dependencies
 npm install
 
-# 4. Run the full verification suite
-npm run validate:all
+# 4. Launch the built-in interactive Expo learning workspace
+npm start
 ```
+
+Scan the QR code with **Expo Go** (or press `i` for iOS Simulator / `a` for Android Emulator) to open the **30 Days of React Native** launcher screen and preview interactive lesson examples and featured projects live on your device.
+
+You can also run the automated repository checks locally:
+
+```bash
+npm run validate:curriculum
+npm run validate:links
+npm run typecheck
+npm run lint
+```
+
+> **Note on running Jest tests with React Native 0.88 + `jest-expo` 58:** In React Native 0.88, the Jest preset moved to the separate `@react-native/jest-preset` package. If `npm test` reports a missing `@react-native/jest-preset` peer dependency in your own project, install it with `npx expo install @react-native/jest-preset --dev`.
 
 ### Useful NPM Scripts
 
 | Command | What It Does |
 | --- | --- |
-| `npm start` | Starts the Expo / Metro dev server |
+| `npm start` | Launches the shared Expo Router example & project playground |
 | `npm run ios` | Starts Expo and opens the iOS Simulator (macOS) |
 | `npm run android` | Starts Expo and opens the Android Emulator / USB device |
 | `npm run typecheck` | Runs strict TypeScript verification (`tsc --noEmit`) |

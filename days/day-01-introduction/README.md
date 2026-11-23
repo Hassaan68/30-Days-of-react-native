@@ -19,6 +19,10 @@ By the end of Day 01, you will be able to:
 - Basic familiarity with using a terminal (`cd`, `ls`, `mkdir`) and a code editor such as VS Code or Cursor.
 - Basic exposure to HTML/CSS and JavaScript helps, though we will reinforce modern JavaScript and TypeScript on Day 02.
 
+## Why This Concept Matters
+
+Before writing components, navigation, or animations, you need an accurate mental model of what React Native actually builds. Real mobile engineering teams choose React Native + Expo because it lets them ship genuine iOS and Android apps from a single TypeScript codebase without sacrificing native feel, gesture responsiveness, or platform APIs. Understanding how Expo structures your project and how React Native talks to native UI widgets saves hours of guesswork the first time you debug a layout, add a native permission, or inspect performance on a real device.
+
 ## Introduction
 
 Building a mobile app used to mean writing and maintaining two completely separate codebases: one in Swift (or Objective-C) for iOS, and another in Kotlin (or Java) for Android. For solo developers, startups, and even large engineering organizations, duplicating business logic, UI flows, and bug fixes across two platforms doubles the cost and slows down every release.
@@ -37,6 +41,19 @@ Key benefits include:
 - **Real native components and gestures:** Scrolling physics, text selection, accessibility APIs, and animations feel authentic to each operating system.
 - **Fast Refresh:** Save a TypeScript file and see your changes on the device in under a second while preserving component state.
 - **Huge ecosystem:** Leverage npm packages alongside native iOS and Android libraries whenever you need custom platform capabilities.
+
+#### React Web vs. React Native at a Glance
+
+If you have used React on the web, the core ideas (components, props, state, hooks) stay the same—only the UI primitives change:
+
+| Concept | React Web (DOM) | React Native (iOS & Android) |
+| --- | --- | --- |
+| **Layout container** | `<div>`, `<section>` | `<View>` |
+| **Text content** | `<p>`, `<span>`, `<h1>` | `<Text>` (all text must live inside `<Text>`) |
+| **Buttons / touch** | `<button onClick={...}>` | `<Pressable onPress={...}>` |
+| **Text input** | `<input type="text" />` | `<TextInput />` |
+| **Styling** | `.css` files & `className` | `StyleSheet.create(...)` & `style` prop |
+| **Units** | `px`, `rem`, `vh` | Unitless numbers (`dp` / `pt`) or percentages |
 
 ### 2. React Native vs. Native Development vs. Flutter
 
@@ -61,30 +78,42 @@ Raw React Native gives you the core rendering runtime, but real apps also need n
 - **Development Builds & Expo Go:** Start prototyping immediately in **Expo Go**, and seamlessly graduate to a custom **Development Build** (`npx expo run:ios` / `npx expo run:android` or EAS Build) when adding custom native code.
 - **EAS (Expo Application Services):** Optional cloud services for building binaries, submitting to the App Store / Play Store, and shipping over-the-air JavaScript updates.
 
-### 4. How React Native Works: The New Architecture
+### 4. How React Native Works Under the Hood
 
-In older versions of React Native, JavaScript and native code communicated over an asynchronous JSON **Bridge**, which could bottleneck rapid updates like scrolling or gestures. Today, **React Native 0.88 runs exclusively on the New Architecture by default**. It rests on four core pillars:
+You do not need to memorize C++ internals on Day 01, so let's build your mental model in three simple layers:
+
+#### a) Real Native Widgets—Not a WebView
+
+Hybrid frameworks like Cordova or Capacitor wrap a web page inside an embedded browser (a WebView). **React Native does not.** When you write `<View>` and `<Text>`, React Native creates real platform views—a `UIView` and `UILabel` on iOS, or an `android.view.View` and `TextView` on Android. That is why scrolling momentum, screen readers, and text selection feel native out of the box.
+
+#### b) How JavaScript Talks to Native Views & Device APIs
+
+Your React components and business logic run in JavaScript, while the actual screen pixels, camera, GPS, and sensors live in the native iOS/Android OS. Whenever your state updates (for example, tapping a button changes `tapCount`), React calculates the minimal UI changes and sends instructions directly to the native side so the OS updates only the native views that changed.
+
+#### c) A Beginner-Friendly Overview of the New Architecture
+
+Older versions of React Native passed messages between JavaScript and native code by serializing JSON strings over an asynchronous **Bridge**, which could lag during fast scrolling or complex gestures. Today, **React Native 0.88 runs exclusively on the New Architecture**, built on four approachable pillars:
 
 ```text
 +-------------------------------------------------------------------+
 |  Your TypeScript / React 19.3 Code                                |
-|  (<View>, <Text>, hooks, state)                                   |
+|  (<View>, <Text>, <Pressable>, hooks, state)                      |
 +-------------------------------------------------------------------+
                                 |
                                 v
 +-------------------------------------------------------------------+
-|  Hermes JavaScript Engine (AOT bytecode, fast startup, low RAM)   |
+|  Hermes JavaScript Engine                                         |
+|  (Precompiles JS to .hbc bytecode at build time; fast VM startup) |
 +-------------------------------------------------------------------+
                                 |
                      JSI (JavaScript Interface)
-            Direct C++ memory references — no JSON bridge
+            Direct C++ references — no JSON bridge overhead
                  /                              \
                 v                                v
 +-------------------------------+  +--------------------------------+
-|  Fabric (New Renderer)        |  |  TurboModules (Native Modules) |
-|  - Synchronous layout reads   |  |  - Lazy-loaded on demand       |
-|  - Concurrent React support   |  |  - Strictly typed via Codegen  |
-|  - C++ shared Shadow Tree     |  |  - Direct sync/async calls     |
+|  Fabric (UI Renderer)         |  |  TurboModules (Native APIs)    |
+|  - Updates native views fast  |  |  - Loaded on demand (lazy)     |
+|  - Supports React 19 features |  |  - Direct sync/async calls     |
 +-------------------------------+  +--------------------------------+
                 |                                |
                 v                                v
@@ -93,12 +122,12 @@ In older versions of React Native, JavaScript and native code communicated over 
 +-------------------------------------------------------------------+
 ```
 
-1. **Hermes:** A lightweight JavaScript engine built specifically for mobile apps. It compiles JavaScript to bytecode ahead of time, reducing app launch time, memory usage, and bundle size.
-2. **JSI (JavaScript Interface):** A lightweight C++ layer that lets JavaScript hold direct references to native C++ host objects and invoke methods synchronously—eliminating JSON serialization overhead.
-3. **Fabric:** The modern rendering system written in C++. It builds the UI shadow tree consistently across iOS and Android, supports React 19 concurrent features (like `useTransition`), and allows synchronous layout measurements (`measure` / `getBoundingClientRect`).
-4. **TurboModules:** A revamped native module system that loads native modules lazily (only when your app actually uses them) and uses **Codegen** to enforce type safety between TypeScript specs and native Swift/Objective-C/Kotlin code.
+1. **Hermes:** A lightweight JavaScript engine designed specifically for mobile apps. Rather than compiling to native CPU machine code like a conventional native AOT compiler, Hermes **precompiles your JavaScript into compact Hermes bytecode (`.hbc`) at build time**, which is then executed by the Hermes bytecode virtual machine on the device. Skipping runtime JS parsing and compilation cuts app startup time and keeps memory usage low.
+2. **JSI (JavaScript Interface):** A thin C++ layer that lets JavaScript hold direct references to native objects and call native functions directly—eliminating the old JSON bridge bottleneck.
+3. **Fabric:** React Native's modern UI renderer. It keeps layout consistent across iOS and Android, enables smooth React 19 concurrent updates, and lets components measure native layout synchronously when needed.
+4. **TurboModules:** The modern native module system for device capabilities (like camera, storage, or haptics). Modules load **lazily**—only when your app actually calls them—keeping cold startup fast.
 
-React Native 0.88 also enables the **Strict TypeScript API** by default and implements W3C `EventTarget` event dispatching for better alignment with standard web APIs.
+> **Curious about deeper internals?** Later in the course—on [Day 19: Native Modules and Platform Differences](../day-19-native-modules-and-platform-differences/README.md) and [Day 24: Debugging and DevTools](../day-24-debugging-and-devtools/README.md)—you will explore advanced details such as native module bindings, type-safe native specs, and runtime profiling. For Day 01, understanding these four pillars is all you need!
 
 ### 5. Setting Up Your Development Environment
 
@@ -155,7 +184,11 @@ my-first-app/
 
 ## Code Examples
 
-Open [`./examples/WelcomeScreen.tsx`](./examples/WelcomeScreen.tsx) to see a complete, strictly typed first screen built with React Native 0.88, Expo StatusBar, and `react-native-safe-area-context`.
+- **File:** [`./examples/WelcomeScreen.tsx`](./examples/WelcomeScreen.tsx) — **Runnable screen component**
+- **Where to place in an Expo project:** Drop it in `app/index.tsx` (or import it into `app/index.tsx` from `components/WelcomeScreen.tsx`).
+- **Preview immediately:** Run `npm start` from the root of this repository to launch the shared Expo playground and open Day 01's interactive screen on iOS, Android, or Web right away.
+
+Here is the core component logic from [`./examples/WelcomeScreen.tsx`](./examples/WelcomeScreen.tsx) (styles omitted for brevity—open the full file to see `StyleSheet.create`):
 
 ```tsx
 import { useState } from 'react';
@@ -164,11 +197,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
 const ARCHITECTURE_PILLARS = [
-  'Hermes Engine',
-  'JSI (No JSON Bridge)',
-  'Fabric Renderer',
-  'TurboModules',
+  'Hermes Engine (fast startup & low memory)',
+  'JSI (direct C++ native bindings, no JSON bridge)',
+  'Fabric (concurrent C++ UI renderer)',
+  'TurboModules (lazy, type-safe native modules)',
 ] as const;
+
+function getPlatformLabel(): string {
+  if (Platform.OS === 'ios') return 'iOS';
+  if (Platform.OS === 'android') return 'Android';
+  return 'Web';
+}
 
 export function WelcomeScreen() {
   const [tapCount, setTapCount] = useState<number>(0);
@@ -180,7 +219,7 @@ export function WelcomeScreen() {
         <Text style={styles.badge}>Day 01 · Expo SDK 58</Text>
         <Text style={styles.title}>Hello, React Native!</Text>
         <Text style={styles.subtitle}>
-          Running natively on {Platform.OS === 'ios' ? 'iOS' : Platform.OS === 'android' ? 'Android' : 'Web'}.
+          Running natively on {getPlatformLabel()} with React Native 0.88.
         </Text>
 
         <View style={styles.card}>
@@ -194,11 +233,14 @@ export function WelcomeScreen() {
 
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel="Increment native interaction counter"
           onPress={() => setTapCount((count) => count + 1)}
           style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
         >
           <Text style={styles.buttonText}>
-            {tapCount === 0 ? 'Tap to test native interaction' : `Tapped ${tapCount} time(s)`}
+            {tapCount === 0
+              ? 'Tap to test native interaction'
+              : `Tapped ${tapCount} ${tapCount === 1 ? 'time' : 'times'}`}
           </Text>
         </Pressable>
       </View>
@@ -211,13 +253,40 @@ export function WelcomeScreen() {
 
 1. **Safe Area Handling (`SafeAreaView`):** We import `SafeAreaView` from `'react-native-safe-area-context'` (never from `'react-native'`). This automatically pads our UI away from notches, Dynamic Islands, and home indicator bars on both iOS and Android.
 2. **Status Bar (`StatusBar` from `'expo-status-bar'`):** Sets the clock and battery icons at the top of the screen to dark text against our light background.
-3. **Platform Detection (`Platform.OS`):** React Native exposes `Platform.OS` (`'ios'`, `'android'`, `'web'`) so you can inspect or customize behavior per operating system.
+3. **Platform Detection (`Platform.OS`):** React Native exposes `Platform.OS` (`'ios'`, `'android'`, `'web'`) via `getPlatformLabel()` so you can inspect or customize behavior per operating system.
 4. **Core Primitives (`View`, `Text`, `Pressable`):**
    - `<View>` is the universal layout container (like a flexbox `<div>`).
    - `<Text>` is required for rendering any string on screen.
    - `<Pressable>` handles taps and gives you a `pressed` state callback for crisp visual feedback.
 5. **Typed State (`useState<number>(0)`):** Tapping the button updates `tapCount` using a functional state updater `(count) => count + 1`, triggering React Native to re-render only the updated text natively.
 6. **`StyleSheet.create`:** Styles are defined once in a plain TypeScript object using Flexbox and unitless density-independent pixels (`dp`).
+
+## Expected Output
+
+When you preview `WelcomeScreen` on iOS, Android, or Web, you will see a vertically centered light-slate screen padded safely inside notches and status bars:
+
+```text
++------------------------------------------+
+|  [ Day 01 · Expo SDK 58 ]                |
+|                                          |
+|  Hello, React Native!                    |
+|  Running natively on iOS with React      |
+|  Native 0.88.                            |
+|                                          |
+|  +------------------------------------+  |
+|  | New Architecture Pillars           |  |
+|  | • Hermes Engine (fast startup...)  |  |
+|  | • JSI (direct C++ native...)       |  |
+|  | • Fabric (concurrent C++ UI...)    |  |
+|  | • TurboModules (lazy, type-safe..) |  |
+|  +------------------------------------+  |
+|                                          |
+|  [    Tap to test native interaction   ] |
++------------------------------------------+
+```
+
+- Tapping the blue button dims it slightly while pressed and updates the label to **`Tapped 1 time`**, **`Tapped 2 times`**, **`Tapped 3 times`**, and so on.
+- On Android the subtitle automatically displays **`Running natively on Android...`**; on iOS it shows **`iOS`**.
 
 ## Common Mistakes
 
@@ -249,9 +318,18 @@ Display the current runtime platform (`Platform.OS`) inside a pill badge, add a 
 
 ## Solutions
 
-Compare your work with our reference implementation after you try the exercises yourself:
+Try completing the starter file on your own first before opening the reference walkthrough below.
+
+<details>
+<summary>Click to view solution notes &amp; links</summary>
 
 - [`./solutions/IntroCardSolution.tsx`](./solutions/IntroCardSolution.tsx): Complete solution implementing the personal intro card, interactive Day 01 check-in toggle, platform pill badge, and motivational quote cycler using strict TypeScript and `SafeAreaView` from `react-native-safe-area-context`.
+- **Key details to compare:**
+  - `formatPlatformName(Platform.OS)` maps `'ios'` and `'android'` to readable labels inside a rounded pill badge (`borderRadius: 999`).
+  - `setQuoteIndex((previous) => (previous + 1) % QUOTES.length)` cycles smoothly without ever going out of bounds, and `QUOTES[quoteIndex] ?? 'Keep building!'` satisfies `noUncheckedIndexedAccess`.
+  - Both `<Pressable>` controls include pressed opacity feedback, `accessibilityRole="button"`, and descriptive `accessibilityLabel` values.
+
+</details>
 
 ## Mini Project
 

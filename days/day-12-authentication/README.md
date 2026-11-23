@@ -18,6 +18,10 @@ By the end of Day 12, you will be able to:
 - Completion of [Day 09: Forms and Validation](../day-09-forms-and-validation/README.md).
 - Completion of [Day 10: State Management](../day-10-state-management/README.md) and [Day 11: API Integration](../day-11-api-integration/README.md).
 
+## Why This Concept Matters
+
+Users trust mobile apps with their accounts, messages, health records, and payment methods—and expect to stay signed in for weeks without typing a password every time they open the app. If tokens are stored in unencrypted storage, left behind after sign-out, or checked too late during startup, your app risks credential theft, flashing private screens, or leaking one user's cached data to another. Mastering secure native storage (`expo-secure-store`), 3-state session restoration, and declarative route protection is essential for every real-world mobile app.
+
 ## Introduction
 
 Almost every production mobile app needs to know **who** is using it. Unlike web apps—where HTTP-only cookies automatically ride along on every browser request—React Native apps usually authenticate with **token-based authentication** (most commonly short-lived JWT access tokens paired with longer-lived refresh tokens).
@@ -25,6 +29,14 @@ Almost every production mobile app needs to know **who** is using it. Unlike web
 Getting authentication right on mobile involves more than sending a `POST /login` request. You have to store secrets in hardware-backed native storage, restore sessions cleanly before rendering protected screens, refresh expired tokens seamlessly, and wipe every trace of private data when a user signs out. Today you will learn the patterns that make mobile authentication both secure and smooth to use.
 
 ## Concepts
+
+> **Web Cookies / `localStorage` vs. Mobile `SecureStore`**
+>
+> | Mechanism | Where It Lives | How Mobile Apps Differ |
+> | --- | --- | --- |
+> | **Browser `HttpOnly` Cookies** | Managed automatically by web browsers per origin | Native mobile HTTP stacks do not share a browser cookie jar across system views and API clients cleanly; mobile apps typically send explicit `Authorization: Bearer <token>` headers instead |
+> | **Browser `localStorage` / RN `AsyncStorage`** | Plaintext disk storage | **Unsafe for tokens!** Plain `AsyncStorage` stores unencrypted SQLite/JSON files that can be extracted from device backups or rooted/jailbroken devices |
+> | **Mobile `expo-secure-store`** | **iOS Keychain** & **Android Keystore** | **Recommended for mobile tokens.** Uses OS-managed, hardware-backed encryption tied to the device lock state |
 
 ### 1. The Mobile Authentication Lifecycle
 
@@ -133,18 +145,21 @@ Instead, mobile apps use **OAuth 2.0 Authorization Code Flow with PKCE (Proof Ke
 
 ## Code Examples
 
+Both files below are strictly typed reusable modules designed to power any Expo Router app (and you can preview interactive auth screens built with these patterns right away via `npm start` in this repository's shared Expo launcher):
+
 ### 1. Secure Token Storage (`examples/tokenStorage.ts`)
 
-Read the full strictly typed implementation in [`./examples/tokenStorage.ts`](./examples/tokenStorage.ts). It encapsulates `expo-secure-store`, validates key formats, checks expiration with a 60-second safety buffer, and provides an in-memory fallback when running on web previews.
+- **Type**: **Reusable helper/module** (place in `src/auth/tokenStorage.ts` or `lib/tokenStorage.ts` in your Expo project).
+- Read the full strictly typed implementation in [`./examples/tokenStorage.ts`](./examples/tokenStorage.ts). It encapsulates `expo-secure-store`, validates key formats, checks expiration with a 60-second safety buffer, and provides an in-memory fallback when running on web previews (never falling back to `AsyncStorage`).
 
 ### 2. Auth Context with Session Restoration (`examples/AuthContext.tsx`)
 
-Read [`./examples/AuthContext.tsx`](./examples/AuthContext.tsx) to see how `AuthProvider` and `useAuth()` coordinate:
-
-- Initial session restoration on app mount (with cancellation protection via an `active` flag).
-- Automatic refresh when a stored access token is expired.
-- `signIn`, `register`, `signOut`, and `refreshSession` actions.
-- An `onSignOut` callback prop so you can wire in `queryClient.clear()` cleanly without coupling your auth provider to a specific data-fetching library.
+- **Type**: **Reusable provider/context module** (place in `src/context/AuthContext.tsx` and wrap your root `app/_layout.tsx` in `<AuthProvider>`).
+- Read [`./examples/AuthContext.tsx`](./examples/AuthContext.tsx) to see how `AuthProvider` and `useAuth()` coordinate:
+  - Initial session restoration on app mount (with cancellation protection via an `active` flag).
+  - Automatic refresh when a stored access token is expired.
+  - `signIn`, `register`, `signOut`, and `refreshSession` actions (backed by an offline-friendly `demoAuthApi` so you can test immediately).
+  - An `onSignOut` callback prop so you can wire in `queryClient.clear()` cleanly without coupling your auth provider to a specific data-fetching library.
 
 ## Step-by-Step Explanation
 
@@ -155,6 +170,25 @@ Read [`./examples/AuthContext.tsx`](./examples/AuthContext.tsx) to see how `Auth
    - If refresh fails (expired or revoked refresh token), we call `clearTokens()` and transition to `'unauthenticated'`.
 3. **Sign In & Register**: Both actions clear previous errors, call the auth endpoint, persist tokens in `expo-secure-store` *before* updating state, and then set `user` and `status = 'authenticated'`.
 4. **Sign Out**: Deletes tokens from `expo-secure-store`, resets React state, and triggers `onSignOut?.()` to flush cached data.
+
+## Expected Output
+
+When you wrap your screens in `AuthProvider` and guard a screen with `AuthGuardSolution` (or `Stack.Protected`):
+
+1. **App launch (`status === 'loading'`)**: A centered spinner with `"Restoring your session..."` renders while `expo-secure-store` is checked—no private content flashes.
+2. **Signed out (`status === 'unauthenticated'`)**: The user sees either your Sign In screen or the default guard card with a **`Retry Session`** button:
+
+```text
++--------------------------------------+
+|  Sign In Required                    |
+|  You need an active session to view  |
+|  this screen.                        |
+|        [   Retry Session   ]         |
++--------------------------------------+
+```
+
+3. **Signed in (`status === 'authenticated'`)**: Signing in with `learner@example.com` (password ≥ 8 chars) stores tokens in Keychain/Keystore and unlocks protected screens immediately—and reopening the app restores the session automatically.
+4. **Role mismatch (`requiredRole="admin"`)**: A standard member (`learner@example.com`) sees an **"Access Denied — Insufficient Permissions"** card with a red **`Switch Account`** button, whereas signing in as `admin@example.com` unlocks the admin screen.
 
 ## Common Mistakes
 
@@ -183,9 +217,18 @@ Open [`./exercises/README.md`](./exercises/README.md) and complete [`./exercises
 
 ## Solutions
 
-Compare your work with the complete, strictly typed reference implementation:
+Try implementing `AuthGuardExercise.tsx` on your own first before expanding the solution walkthrough below.
 
-- [`./solutions/AuthGuardSolution.tsx`](./solutions/AuthGuardSolution.tsx) — Demonstrates `SafeAreaView` from `react-native-safe-area-context`, safe side-effect handling in `useEffect`, role-based gating, and retry/sign-out flows.
+<details>
+<summary>Click to view solution notes & links</summary>
+
+- [`./solutions/AuthGuardSolution.tsx`](./solutions/AuthGuardSolution.tsx) — Complete, strictly typed route and role guard demonstrating:
+  - `SafeAreaView` from `react-native-safe-area-context` across loading, unauthenticated, and Access Denied states.
+  - Safe invocation of `onUnauthenticated()` inside `useEffect` (never during render).
+  - Role enforcement (`requiredRole && user.role !== requiredRole`) with a red **Switch Account** `Pressable` calling `void signOut()`.
+  - A **Retry Session** button with local `isRetrying` loading feedback calling `await refreshSession()`.
+
+</details>
 
 ## Mini Project
 
@@ -201,7 +244,7 @@ Ready to build the full standalone authentication project? Explore [Project 04: 
 ## Key Takeaways
 
 - Model authentication with three states (`loading`, `authenticated`, `unauthenticated`) to prevent launch flicker.
-- Always store tokens in `expo-secure-store` (iOS Keychain / Android Keystore), never `AsyncStorage`.
+- Always store tokens in `expo-secure-store` (iOS Keychain / Android Keystore)—never browser-style `localStorage` or plain `AsyncStorage`.
 - Use Expo Router's `Stack.Protected` for declarative route protection that keeps navigation history clean.
 - On logout, clear secure storage, auth state, and all user-scoped caches.
 - Use OAuth 2.0 with PKCE (`expo-auth-session`) for third-party logins on mobile.
@@ -215,7 +258,7 @@ Ready to build the full standalone authentication project? Explore [Project 04: 
 
 ## Progress Checklist
 
-- [ ] Understand why `expo-secure-store` is required instead of `AsyncStorage` for tokens
+- [ ] Understand why mobile apps use `expo-secure-store` instead of cookies, `localStorage`, or `AsyncStorage`
 - [ ] Read `examples/tokenStorage.ts` and `examples/AuthContext.tsx`
 - [ ] Understand how `Stack.Protected` guards authenticated vs. unauthenticated routes
 - [ ] Complete `exercises/AuthGuardExercise.tsx` and compare with `solutions/AuthGuardSolution.tsx`

@@ -30,9 +30,9 @@ You do not need to be a senior React Native maintainer to contribute meaningfull
 ### Fork, Clone, and Install
 
 ```bash
-# 1. Fork the repository on GitHub, then clone your fork
-git clone https://github.com/<your-username>/30days-of-react-native.git
-cd 30days-of-react-native
+# 1. Fork https://github.com/Hassaan68/30-Days-of-react-native on GitHub, then clone your fork
+git clone https://github.com/<your-username>/30-Days-of-react-native.git
+cd 30-Days-of-react-native
 
 # 2. Activate the recommended Node version
 nvm use || fnm use
@@ -40,8 +40,8 @@ nvm use || fnm use
 # 3. Install dependencies
 npm install
 
-# 4. Verify everything passes locally before making changes
-npm run validate:all
+# 4. Verify checks locally before making changes
+npm run validate:curriculum && npm run validate:links && npm run typecheck && npm run lint
 ```
 
 ---

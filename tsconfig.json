@@ -17,6 +17,10 @@
     "baseUrl": "."
   },
   "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "days/**/*.ts",
     "days/**/*.tsx",
     "projects/**/*.ts",

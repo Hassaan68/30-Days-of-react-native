@@ -11,17 +11,35 @@ By the end of Day 24, you will be able to:
 
 ## Prerequisites
 - Completion of [Day 16: Lists and Performance](../day-16-lists-and-performance/README.md), [Day 19: Native Modules and Platform Differences](../day-19-native-modules-and-platform-differences/README.md), and [Day 23: Security](../day-23-security/README.md).
-- Familiarity with running your Expo app via `npx expo start`.
+- Familiarity with running your Expo app via `npm start` / `npx expo start`.
+
+## Why This Concept Matters
+Shipping mobile features quickly is impossible if you rely on guessing and littering components with `console.log`. Because React Native runs across both JavaScript (Hermes) and native iOS/Android threads, bugs can happen in React renders, network payloads, native permissions, or frame timing. Mastering React Native DevTools, native system logs, and Error Boundaries turns frustrating "my app just closed" moments into fast, calm, repeatable root-cause fixes—and keeps unexpected render errors from stranding real users on a blank screen.
 
 ## Introduction
 Writing features is only half of mobile engineering — the other half is finding out **why** something broke, slowed down, or crashed on a user's device. Because a React Native app spans both a JavaScript runtime (**Hermes**) and native iOS/Android runtimes, effective debugging means knowing which tool looks into which layer.
 
-In modern React Native (0.88) and Expo SDK 58, the debugging story has been dramatically simplified around **React Native DevTools**, a single built-in debugger modeled on Chrome DevTools that connects directly to Hermes without legacy proxy hacks or third-party Flipper plugins.
+In modern React Native (0.88) and Expo SDK 58, the debugging story has been dramatically simplified around **React Native DevTools**, a single built-in debugger modeled on Chrome DevTools that connects directly to the Hermes engine without legacy proxy hacks or third-party Flipper plugins.
 
 ## Concepts
 
-### 1. Expo CLI & Dev Menu Shortcuts
-When you run `npx expo start`, keep these terminal shortcuts at your fingertips:
+### 1. Browser DevTools vs. React Native DevTools
+
+> **Browser DevTools vs. React Native DevTools Callout:** On the web, you press `F12` / `Cmd + Opt + I` in Chrome to inspect everything in one place. In React Native, there is no browser DOM—your app renders native iOS/Android views driven by Hermes.
+> - **For JavaScript, React state, Network & Profiling:** Start Metro (`npm start` or `npx expo start`) and press **`j`** in the terminal to launch **React Native DevTools**. It gives you familiar Chrome DevTools panels (**Console**, **Sources**, **Network**, **React Components**, and **React Profiler**) attached directly to Hermes.
+> - **For native crashes & OS logs:** If the app closes before JS even starts (missing native permission, native SDK mismatch, out-of-memory kill), React Native DevTools cannot catch it—open **Xcode Console** / macOS **`Console.app`** (iOS) or run **`adb logcat`** (Android).
+
+| Debugging Task | Browser DevTools (Web) | React Native 0.88 + Expo SDK 58 |
+| --- | --- | --- |
+| **Open Debugger** | `F12` / `Cmd + Opt + I` | Press **`j`** in the Metro terminal (`npm start`) |
+| **Inspect UI Layout** | **Elements** DOM tree & CSS box model | In-app **Element Inspector** (Dev Menu → `m`) + **Components** tab in React Native DevTools |
+| **Console & Breakpoints** | **Console** / **Sources** tabs | **Console** / **Sources** tabs in React Native DevTools (attached to Hermes) |
+| **Inspect HTTP Calls** | **Network** tab | **Network** tab in React Native DevTools (shows `fetch` & `axios` calls) |
+| **Frame & Render Profiling** | **Performance** + React Profiler | In-app **Perf Monitor** (JS vs. UI FPS) + **Profiler** tab in React Native DevTools |
+| **OS / Native Crashes** | Browser crash tab | **Xcode Console** / macOS **`Console.app`** (iOS) and **`adb logcat`** (Android) |
+
+### 2. Expo CLI & Dev Menu Shortcuts
+When you run `npm start` (or `npx expo start`), keep these terminal shortcuts at your fingertips:
 
 | Key | Action |
 | --- | --- |
@@ -34,7 +52,7 @@ When you run `npx expo start`, keep these terminal shortcuts at your fingertips:
 
 On a physical device, shake the phone (or press `Cmd + D` on iOS Simulator / `Cmd + M` or `Ctrl + M` on Android Emulator) to open the **Developer Menu**, where you can toggle the **Element Inspector**, **Performance Monitor**, and Fast Refresh.
 
-### 2. React Native DevTools (Unified Debugger)
+### 3. React Native DevTools (Unified Debugger)
 **React Native DevTools** is the official, built-in debugger for React Native and Expo (replacing both legacy Chrome remote JS debugging and Flipper). Press `j` in your Expo terminal to launch it. It includes:
 - **Console:** Live logs with clickable stack traces mapped back to your TypeScript source files, plus interactive expression evaluation in the paused stack frame.
 - **Sources (Breakpoints):** Open any `.ts`/`.tsx` file (`Cmd/Ctrl + P`), click a line gutter to set a breakpoint, right-click for **conditional breakpoints** (e.g., `item.id === 'task-42'`), inspect closure variables, and step over/into functions.
@@ -44,7 +62,7 @@ On a physical device, shake the phone (or press `Cmd + D` on iOS Simulator / `Cm
 
 > **LogBox (In-App Warnings & RedBox):** Unhandled JS exceptions appear as a full-screen **RedBox** in development, while `console.warn` / `console.error` appear as collapsible **LogBox** banners at the bottom. Never blindly call `LogBox.ignoreAllLogs()` — fix root warnings instead.
 
-### 3. Inspecting Native Logs (`adb logcat`, Xcode Console, `Console.app`)
+### 4. Inspecting Native Logs (`adb logcat`, Xcode Console, `Console.app`)
 When a native module fails (permissions crash, mismatched native SDK, out-of-memory kill), the app closes before React Native's JavaScript LogBox can appear. Use native system logs:
 
 - **Android (`adb logcat`):**
@@ -55,7 +73,7 @@ When a native module fails (permissions crash, mismatched native SDK, out-of-mem
 - **iOS (Xcode Console):** Run your development build from Xcode (`npx expo run:ios`) to view native Objective-C/Swift exceptions, Auto Layout warnings, and `NSLog`/`os_log` output live in the debug console.
 - **iOS Simulator / Physical Device (`Console.app` on macOS):** Open macOS **Console.app**, select your simulator or USB-connected iPhone in the sidebar, click **Start**, and filter by your app's process name or bundle identifier.
 
-### 4. React Error Boundaries
+### 5. React Error Boundaries
 An uncaught JavaScript error during rendering unmounts the entire React tree, leaving users staring at a frozen or blank screen. A **React Error Boundary** catches rendering, lifecycle, and constructor errors in any child component below it and displays a safe recovery screen instead.
 
 Error Boundaries must be implemented as React class components defining:
@@ -67,15 +85,15 @@ Error Boundaries must be implemented as React class components defining:
 - Asynchronous callbacks (`setTimeout`, rejected Promises) — handle with `try/catch` or TanStack Query `isError` states.
 - Native crashes (Objective-C/Swift/Java/Kotlin) — caught by native crash SDKs like Sentry or Firebase Crashlytics.
 
-### 5. Crash Investigation & Symbolication
-In production builds, JavaScript is compiled to minified Hermes bytecode and native binaries are stripped of debug symbols to shrink app download size. Raw production stack traces therefore look unreadable (e.g., `index.android.bundle:1:48291` or raw memory addresses `0x0000000104a8f2c0`).
+### 6. Crash Investigation & Symbolication
+In production builds, JavaScript is minified and precompiled at build time into compact **Hermes bytecode (`.hbc`)** executed by the Hermes bytecode VM on the device, and native binaries are stripped of debug symbols to shrink app download size. Raw production stack traces therefore look unreadable (e.g., `index.android.bundle:1:48291` or raw memory addresses `0x0000000104a8f2c0`).
 
 **Symbolication** turns those cryptic addresses back into human-readable file names and line numbers:
 - **JavaScript / Hermes:** Upload **source maps** (`*.map`) generated during `eas build` / Metro bundling to your crash reporting service (e.g., Sentry via the `@sentry/react-native` Expo plugin).
 - **iOS Native Crashes:** Upload **`.dSYM`** debug symbol bundles generated by Xcode / EAS Build.
 - **Android Native Crashes:** Upload the **ProGuard / R8 `mapping.txt`** file generated when code shrinking/obfuscation is enabled.
 
-### 6. Performance Profiling (JS Thread vs. UI Thread)
+### 7. Performance Profiling (JS Thread vs. UI Thread)
 Smooth mobile apps render at **60 FPS** (**16.6 ms** per frame) — or **120 FPS** (**8.3 ms** per frame) on ProMotion / high-refresh-rate screens.
 
 When scrolling stutters or taps feel sluggish, open the in-app **Performance Monitor** (`Dev Menu → Show Perf Monitor`) and compare the two FPS counters:
@@ -85,9 +103,22 @@ When scrolling stutters or taps feel sluggish, open the in-app **Performance Mon
 > **Always profile performance in a Release build!** Development mode runs extra checks, unoptimized bundles, and DevTools hooks that can make an app appear 3–5× slower than production.
 
 ## Code Examples
-Explore the complete, strictly typed examples in [`./examples/`](./examples/):
-1. [`examples/AppErrorBoundary.tsx`](./examples/AppErrorBoundary.tsx) — Reusable class-based React Error Boundary with `onError` reporting hook, `onReset` callback, custom `fallback` render prop, accessible "Try Again" recovery UI, and `__DEV__`-only stack trace viewer.
-2. [`examples/useRenderTracker.ts`](./examples/useRenderTracker.ts) — Development-only diagnostic hook (`useRenderTracker`) and pure prop-diff helper (`diffTrackedProps`) that log render counts, commit intervals, and changed prop keys to React Native DevTools without violating React 19 hook rules.
+
+> **How to run & preview today's examples:**
+> - **Interactive preview (this repository):** Run `npm start` from the repository root to open the shared Expo launcher, press **`j`** in Metro to open React Native DevTools, and wrap any preview screen with `AppErrorBoundary` or attach `useRenderTracker` to watch live render diagnostics in the DevTools Console.
+> - **In your own Expo project:** Place `AppErrorBoundary.tsx` in `src/components/AppErrorBoundary.tsx` (wrapping your root layout in `app/_layout.tsx` or risky screens) and `useRenderTracker.ts` in `src/hooks/useRenderTracker.ts`.
+
+### Example 1: Reusable React Error Boundary & Recovery Screen
+- **Type:** Reusable wrapper component + fallback UI (`AppErrorBoundary`)
+- **File:** [`examples/AppErrorBoundary.tsx`](./examples/AppErrorBoundary.tsx)
+- **Where to place in an Expo project:** `src/components/AppErrorBoundary.tsx` (import in `app/_layout.tsx` or around feature screens)
+- **What it demonstrates:** Class-based Error Boundary with `onError` reporting hook, `onReset` recovery callback, custom `fallback` render prop, accessible **Try Again** UI inside `SafeAreaView`, and a `__DEV__`-only scrollable stack trace viewer.
+
+### Example 2: Development-Only Render Diagnostics Hook & Prop Diff Helper
+- **Type:** Reusable custom hook + pure helper module (`useRenderTracker`, `diffTrackedProps`)
+- **File:** [`examples/useRenderTracker.ts`](./examples/useRenderTracker.ts)
+- **Where to place in an Expo project:** `src/hooks/useRenderTracker.ts`
+- **What it demonstrates:** Logs component render counts, milliseconds since the previous commit, and changed prop keys to React Native DevTools Console inside `useEffect` without violating React 19 hook rules.
 
 ## Step-by-Step Explanation
 Let's walk through how `AppErrorBoundary.tsx` and `useRenderTracker.ts` work under the hood:
@@ -96,12 +127,48 @@ Let's walk through how `AppErrorBoundary.tsx` and `useRenderTracker.ts` work und
 3. **Never exposing internals to production users:** The dark developer stack panel is gated behind `typeof __DEV__ !== 'undefined' && __DEV__`, ensuring end users see calm recovery guidance instead of frightening stack traces.
 4. **Pure effect-based render tracking (`useRenderTracker.ts`):** Instead of mutating refs during the render phase (which breaks under React 19 Strict Mode), `useRenderTracker` updates `commitCountRef`, `lastCommitTimeRef`, and `previousPropsRef` inside `useEffect`, then delegates prop comparison to the pure `diffTrackedProps` utility using `Object.is`.
 
+## Expected Output
+
+### 1. On Screen (`AppErrorBoundary.tsx`)
+When a wrapped child component throws during render, instead of a blank screen, the user sees a centered recovery card:
+
+```text
+┌─────────────────────────────────────────┐
+│ Something went wrong                    │
+│                                         │
+│ We ran into an unexpected display       │
+│ error. Your saved data is safe — tap    │
+│ below to reload this screen.            │
+│                                         │
+│ [              Try Again              ] │
+│                                         │
+│ ┌─────────────────────────────────────┐ │  ← Visible in __DEV__ only!
+│ │ DEVELOPER DETAILS (__DEV__ ONLY)    │ │
+│ │ TypeError: Cannot read properties...│ │
+│ │ Component Stack:                    │ │
+│ │   at BrokenWidget ...               │ │
+│ └─────────────────────────────────────┘ │
+└─────────────────────────────────────────┘
+```
+
+Tapping **Try Again** resets the boundary and re-mounts the child tree cleanly.
+
+### 2. In React Native DevTools Console (`useRenderTracker.ts`)
+After pressing `j` in Metro, each re-render of a tracked component prints structured diagnostics:
+
+```text
+[RenderTracker] TaskRow { renderCount: 1, elapsedSinceLastMs: 0, changedProps: [] }
+[RenderTracker] TaskRow { renderCount: 2, elapsedSinceLastMs: 412, changedProps: ['onToggle'] }
+```
+
+Seeing `changedProps: ['onToggle']` immediately tells you a parent is creating a new inline callback reference on every render!
+
 ## Common Mistakes
-- **Profiling performance in Debug mode:** Seeing 35 FPS in Expo Go dev mode does not automatically mean your production app is slow — always benchmark release builds before micro-optimizing.
-- **Expecting an Error Boundary to catch `async` or `onPress` errors:** Unhandled promise rejections inside an `onPress` handler bypass Error Boundaries completely; handle them with `try/catch`.
-- **Leaving `console.log` inside `renderItem` or scroll handlers:** Logging hundreds of objects per second can saturate the JS thread and DevTools bridge.
-- **Showing raw stack traces to production users:** Looks broken and can leak internal file paths or state details. Always gate debug panels behind `__DEV__`.
-- **Forgetting to upload source maps / dSYMs on release builds:** Without symbolication files, production crash reports are nearly impossible to trace back to your TypeScript code.
+- **Profiling performance in Debug mode:** Seeing 35 FPS in Expo Go dev mode does not automatically mean your production app is slow. **Fix:** Always benchmark release builds before micro-optimizing.
+- **Expecting an Error Boundary to catch `async` or `onPress` errors:** Unhandled promise rejections inside an `onPress` handler bypass Error Boundaries completely. **Fix:** Wrap event handlers and async calls in `try/catch` (or use TanStack Query `isError` states).
+- **Leaving `console.log` inside `renderItem` or scroll handlers:** Logging hundreds of objects per second can saturate the JS thread and DevTools connection. **Fix:** Use breakpoints or `useRenderTracker` temporarily during debugging, and remove noisy logs afterward.
+- **Showing raw stack traces to production users:** Looks broken and can leak internal file paths or state details. **Fix:** Always gate debug panels behind `__DEV__`.
+- **Forgetting to upload source maps / dSYMs on release builds:** Without symbolication files, production crash reports are nearly impossible to trace back to your TypeScript code. **Fix:** Automate symbol upload in EAS Build / CI.
 
 ## Best Practices
 - **Place Error Boundaries strategically:** Wrap your root layout **and** isolate risky sections (charts, third-party widgets, rich-text renderers) with feature-level boundaries so one failing widget doesn't take down the entire app.
@@ -116,9 +183,16 @@ Work through the guided exercises in [`./exercises/README.md`](./exercises/READM
 - **Challenge:** Implement `buildDiagnosticReport(error, componentStack)` with timestamp, `Platform.OS`/`Platform.Version`, and truncated component stack, and wire a one-shot "Report Issue" button.
 
 ## Solutions
-Review the full, strictly typed solution in [`./solutions/ErrorFallbackSolution.tsx`](./solutions/ErrorFallbackSolution.tsx).
-- `buildDiagnosticReport` builds a clean, bounded diagnostic snapshot ready for issue trackers or support emails.
-- `ErrorFallbackSolution` cleanly separates user-facing recovery actions from `__DEV__`-gated developer details and disables the **Report Issue** button once diagnostics are submitted.
+Complete the Beginner, Intermediate, and Challenge tasks in [`./exercises/ErrorFallbackExercise.tsx`](./exercises/ErrorFallbackExercise.tsx) before checking the reference implementation.
+
+<details>
+<summary>Click to view solution notes & links</summary>
+
+Review the full, strictly typed solution in [`./solutions/ErrorFallbackSolution.tsx`](./solutions/ErrorFallbackSolution.tsx):
+- `buildDiagnosticReport` builds a clean, bounded diagnostic snapshot (ISO timestamp, `Platform.OS`/`Platform.Version`, `error.name: error.message`, and `componentStack` truncated to 1200 characters) ready for issue trackers or support emails.
+- `ErrorFallbackSolution` wraps the screen in `SafeAreaView` from `react-native-safe-area-context`, cleanly separates user-facing recovery actions from `__DEV__`-gated collapsible developer details (`accessibilityState={{ expanded }}`), and disables the **Report Issue** button once diagnostics are submitted.
+
+</details>
 
 ## Mini Project
 **Debug & Bulletproof a Screen End-to-End**

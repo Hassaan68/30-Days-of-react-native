@@ -17,13 +17,25 @@ By the end of Day 20, you will be able to:
 - Comfortable with TypeScript, React hooks, and async/await error handling.
 - Familiarity with running npm scripts (`npm test`, `npm run typecheck`, `npm run lint`).
 
+## Why This Concept Matters
+
+On the web, if a broken checkout or login screen slips into production, you can deploy a fix in two minutes. On iOS and Android, every binary release goes through App Store or Google Play review, and older app versions stay installed on users' phones for weeks. Automated unit and component tests give you a fast, repeatable safety net that catches broken pricing math, missing validation, and accessibility regressions in seconds — long before a build ever reaches your users.
+
 ## Introduction
 
 Shipping a mobile app without automated tests is like deploying without a seatbelt: unlike a website where you can hotfix a broken checkout button in two minutes, a mobile bug can sit in app store review for days while users leave one-star reviews.
 
 The secret to enjoying testing in React Native is testing **behavior, not implementation details**. You should rarely care what internal `useState` variable name a component uses. You care that when a user types an invalid email and taps **Sign in**, an accessible error alert appears and the login request is not sent.
 
-Today we use **Jest** (`jest-expo` ~58.0.0) and **React Native Testing Library** (`@testing-library/react-native` 13.x) — the exact stack configured in this repository's `jest.config.js`.
+Today we use **Jest** (`jest-expo` ~58.0.0) and **React Native Testing Library** (`@testing-library/react-native` 14.x) — the exact stack configured in this repository's `jest.config.js`.
+
+> **React Native 0.88 / Expo SDK 58 Setup Note**
+>
+> When setting up testing in a fresh Expo SDK 58 + React Native 0.88 project, `jest-expo` 58 requires `@react-native/jest-preset` matching React Native `0.88` as a `devDependency`. Install the complete compatible set with:
+>
+> ```bash
+> npx expo install jest-expo jest @react-native/jest-preset @testing-library/react-native --dev
+> ```
 
 ## Concepts
 
@@ -68,13 +80,23 @@ describe('applyDiscountPercent', () => {
 
 ### 3. Component Testing with `jest-expo` and React Native Testing Library
 
-`jest-expo` automatically configures React Native transforms and mocks core Expo globals. `@testing-library/react-native` renders your component tree and lets you interact with it:
+`jest-expo` automatically configures React Native transforms and mocks core Expo globals. `@testing-library/react-native` (v14+) renders your component tree in React 19 and lets you interact with it cleanly using `async`/`await`:
 
-- `render(<Component />)`: Mounts the component into the virtual test tree.
+- `await render(<Component />)`: Mounts the component into the virtual test tree.
 - `screen`: Exposes query methods (`getByRole`, `getByLabelText`, `getByText`, `queryByText`, `findByText`) so you do not have to destructure queries from `render()`.
-- `fireEvent.press(el)` / `fireEvent.changeText(input, 'text')`: Dispatches events synchronously.
-- `userEvent.setup()`: Simulates more realistic multi-step user interactions asynchronously (`await user.press(el)`, `await user.type(input, 'text')`).
+- `await fireEvent.press(el)` / `await fireEvent.changeText(input, 'text')`: Dispatches native touch and text-change events cleanly wrapped in `act`.
+- `userEvent.setup()`: Simulates realistic multi-step user interactions asynchronously (`await user.press(el)`, `await user.type(input, 'text')`).
 - `waitFor(() => { ... })`: Retries assertions until asynchronous state updates (such as resolved promises or API responses) settle.
+
+> **React Web vs. React Native: React Testing Library (Web) vs. React Native Testing Library (RNTL)**
+>
+> | Concept | React Testing Library (Web) | React Native Testing Library (Mobile) |
+> | --- | --- | --- |
+> | **Tapping / Clicking** | `fireEvent.click(btn)` / `user.click(btn)` | `await fireEvent.press(btn)` / `await user.press(btn)` |
+> | **Typing in Inputs** | `fireEvent.change(input, { target: { value: 'hi' } })` | `await fireEvent.changeText(input, 'hi')` / `await user.type(input, 'hi')` |
+> | **Accessible Queries** | `getByRole`, `getByLabelText`, `getByText` (from HTML tags & ARIA) | `getByRole`, `getByLabelText`, `getByText` (from `accessibilityRole`, `accessibilityLabel`, and `<Text>`) |
+> | **Test Environment** | `jsdom` / `happy-dom` browser DOM | `jest-expo` + `@react-native/jest-preset` native host tree (no DOM) |
+> | **Role Matching Tip** | `<button>` has implicit `role="button"` | `<Pressable>` needs explicit `accessibilityRole="button"` so `getByRole('button')` finds it! |
 
 ### 4. Query Priority: Test Like a User
 
@@ -135,21 +157,34 @@ Always call `jest.restoreAllMocks()` or `jest.clearAllMocks()` in `afterEach` so
 Compare these two designs:
 
 - **Hard to test**: A `LoginCard` component hard-codes `axios.post(...)`, `SecureStore.setItemAsync(...)`, and inline regexes inside its button `onPress`. Testing it requires mocking three modules.
-- **Easy to test**: `validateLoginCredentials` lives as a pure exported function, and `LoginCard` receives `onLogin: (credentials: LoginCredentials) => Promise<void>` as a prop. Unit tests verify validation in 1ms, and component tests pass `jest.fn()` to simulate success, loading, and network errors deterministically!
+- **Easy to test**: `validateLoginCredentials` lives as a pure exported function, and `LoginCard` receives `onLogin: (credentials: LoginCredentials) => Promise<void>` as a prop. Unit tests verify validation in 1 ms, and component tests pass `jest.fn()` to simulate success, loading, and network errors deterministically!
 
 ## Code Examples
 
 ### Example 1: Pure Pricing Utilities
 
-See [`./examples/priceUtils.ts`](./examples/priceUtils.ts). It stores prices in integer cents to eliminate floating-point rounding bugs (`0.1 + 0.2 !== 0.3`) and validates negative inputs and discount ranges with `RangeError`.
+- **Type**: Reusable helper/module (pure TypeScript math & formatting functions)
+- **File**: [`./examples/priceUtils.ts`](./examples/priceUtils.ts)
+- **Where to place in an Expo project**: Save under `src/features/cart/utils/priceUtils.ts`.
+- **How to run**: Imported and verified directly by `CounterWidget.test.tsx` via `npm test`.
+
+It stores prices in integer cents to eliminate floating-point rounding bugs (`0.1 + 0.2 !== 0.3`) and validates negative inputs and discount ranges with `RangeError`.
 
 ### Example 2: Accessible `CounterWidget` Component
 
-See [`./examples/CounterWidget.tsx`](./examples/CounterWidget.tsx). Notice how every interactive `Pressable` provides `accessibilityRole="button"`, a descriptive `accessibilityLabel`, and `accessibilityState={{ disabled }}`.
+- **Type**: Runnable component
+- **File**: [`./examples/CounterWidget.tsx`](./examples/CounterWidget.tsx)
+- **Where to place in an Expo project**: Save under `src/features/cart/components/CounterWidget.tsx` and render inside any feature screen.
+- **How to run**: Preview `<CounterWidget />` live in this repository's shared Expo launcher using `npm start` (or `npm run ios` / `npm run android`), and test it automatically via `CounterWidget.test.tsx`.
+
+Notice how every interactive `Pressable` provides `accessibilityRole="button"`, a descriptive `accessibilityLabel`, and `accessibilityState={{ disabled }}`.
 
 ### Example 3: Passing Jest + RNTL Test Suite
 
-See [`./examples/CounterWidget.test.tsx`](./examples/CounterWidget.test.tsx). It runs real unit tests for `priceUtils.ts` and component tests for `CounterWidget.tsx` via `npm test`.
+- **Type**: Automated unit + component test suite
+- **File**: [`./examples/CounterWidget.test.tsx`](./examples/CounterWidget.test.tsx)
+- **Where to place in an Expo project**: Co-locate directly beside the component as `src/features/cart/components/CounterWidget.test.tsx`.
+- **How to run**: Execute the suite directly with Jest (or run all repository tests via `npm test`):
 
 ```bash
 npx jest days/day-20-testing/examples/CounterWidget.test.tsx
@@ -162,9 +197,32 @@ npx jest days/day-20-testing/examples/CounterWidget.test.tsx
 3. **Assert observable outcomes, not internal state**: In `CounterWidget.test.tsx`, we never inspect React state hooks. We press buttons, assert that `Count: 3` appears on screen, and confirm the injected `onChange` callback was called with `3`.
 4. **Test boundary conditions explicitly**: Pressing Increment twice when `max={2}` confirms that `count` never exceeds `2` and `onChange` is only fired once (when the value actually changed).
 
+## Expected Output
+
+Running `npx jest days/day-20-testing/examples/CounterWidget.test.tsx` produces a clean green test run covering both `priceUtils` unit tests and `CounterWidget` component tests:
+
+```text
+PASS  days/day-20-testing/examples/CounterWidget.test.tsx
+  priceUtils
+    ✓ calculates the subtotal in integer cents
+    ✓ applies percentage discounts and rejects out-of-range discounts
+    ✓ computes subtotal, discount, tax, and total accurately
+    ✓ formats positive and negative cents as USD currency
+  CounterWidget
+    ✓ renders the initial count and updates when incremented or decremented
+    ✓ enforces minimum and maximum boundaries
+    ✓ resets back to the initial value when Reset is pressed
+
+Test Suites: 1 passed, 1 total
+Tests:       7 passed, 7 total
+```
+
+And when rendered interactively in the Expo launcher (`npm start`), `<CounterWidget initialValue={2} min={0} max={5} />` displays a rounded white card reading **Quantity Selector**, **Count: 2**, dark `-1` and blue `+1` buttons (dimming to muted gray when hitting `min` or `max`), and a **Reset** action underneath.
+
 ## Common Mistakes
 
 - **Testing internal state or component method names**: Refactoring a component from `useState` to `useReducer` should not break your tests if the user-visible behavior stayed identical.
+- **Using web DOM events (`fireEvent.click` / `fireEvent.change`) in RNTL**: React Native components emit `press` and `changeText` events — always use `fireEvent.press` / `fireEvent.changeText` (or `userEvent.press` / `userEvent.type`).
 - **Forgetting `await waitFor(...)` for async state updates**: Triggering an async promise in `onPress` and asserting immediately causes flaky tests and React `act(...)` warnings.
 - **Using `getByText` to assert absence**: `getBy*` throws immediately when an element is missing. Use `expect(screen.queryByText('Error')).toBeNull()` instead.
 - **Leaving mocks uncleaned between tests**: A `mockRejectedValue` from test #1 can poison test #2 unless you create fresh mocks per test or reset them in `afterEach`.
@@ -180,7 +238,7 @@ npx jest days/day-20-testing/examples/CounterWidget.test.tsx
 
 ## Exercises
 
-Open [`./exercises/README.md`](./exercises/README.md) and complete the starter file [`./exercises/LoginCardExercise.tsx`](./exercises/LoginCardExercise.tsx).
+Open [`./exercises/README.md`](./exercises/README.md) for detailed requirements, acceptance criteria, and hints, then complete [`./exercises/LoginCardExercise.tsx`](./exercises/LoginCardExercise.tsx):
 
 - **Beginner**: Implement `validateLoginCredentials` in `LoginCardExercise.tsx` to reject blank/invalid emails and passwords under 6 characters, and write Jest unit tests covering all three branches.
 - **Intermediate**: Add `isSubmitting` loading state, `signedInEmail` success feedback, and `try / catch / finally` error handling to `LoginCardExercise.tsx`, then test valid submission and rejected login with `fireEvent` and `waitFor`.
@@ -188,16 +246,23 @@ Open [`./exercises/README.md`](./exercises/README.md) and complete the starter f
 
 ## Solutions
 
-Review the full reference component and passing test suite:
+Try building `LoginCardExercise` and writing your own Jest + RNTL tests before inspecting the reference solution.
 
-- Component implementation: [`./solutions/LoginCardSolution.tsx`](./solutions/LoginCardSolution.tsx)
-- Passing Jest & RNTL tests: [`./solutions/LoginCardSolution.test.tsx`](./solutions/LoginCardSolution.test.tsx)
+<details>
+<summary>Click to view solution notes &amp; links</summary>
 
-Run the solution tests directly with:
+- **Component implementation**: [`./solutions/LoginCardSolution.tsx`](./solutions/LoginCardSolution.tsx)
+- **Passing Jest & RNTL tests**: [`./solutions/LoginCardSolution.test.tsx`](./solutions/LoginCardSolution.test.tsx)
+- **What changed**:
+  - `validateLoginCredentials` trims the email, rejects empty strings or values missing `@`, rejects passwords shorter than 6 characters, and returns `null` when valid.
+  - `LoginCardSolution` normalizes the email (`trim().toLowerCase()`), disables inputs and the Sign in button while `isSubmitting` is `true` (updating the label to `"Signing in..."`), displays `"Welcome back, <email>!"` on resolution, and renders an `accessibilityRole="alert"` error banner on rejection inside `try / catch / finally`.
+  - `LoginCardSolution.test.tsx` covers 3 pure unit tests for `validateLoginCredentials` and 3 RNTL component tests (invalid submission skipping `onLogin`, normalized successful login with `waitFor`, and rejected `onLogin` showing the alert).
+- **Run the solution tests directly**:
+  ```bash
+  npx jest days/day-20-testing/solutions/LoginCardSolution.test.tsx
+  ```
 
-```bash
-npx jest days/day-20-testing/solutions/LoginCardSolution.test.tsx
-```
+</details>
 
 ## Mini Project
 
@@ -207,7 +272,7 @@ npx jest days/day-20-testing/solutions/LoginCardSolution.test.tsx
 
 - Combine static TypeScript checks, fast unit tests, and user-centric RNTL component tests for maximum confidence with minimal maintenance cost.
 - Query components by `accessibilityRole` and `accessibilityLabel` so tests stay resilient to refactors and protect accessibility.
-- Use `waitFor` and `findBy*` for asynchronous state changes, and `queryBy*` when asserting an element is not present.
+- Use `fireEvent.press` / `fireEvent.changeText` (or `userEvent`), `waitFor` / `findBy*` for async UI updates, and `queryBy*` when asserting an element is not present.
 - Pure helper modules and dependency injection turn tricky async UI flows into clean, deterministic tests.
 
 ## Further Reading
@@ -219,7 +284,7 @@ npx jest days/day-20-testing/solutions/LoginCardSolution.test.tsx
 
 ## Progress Checklist
 
-- [ ] Understand the mobile testing pyramid and when to write unit vs component vs E2E tests.
+- [ ] Understand the mobile testing pyramid and when to write unit vs. component vs. E2E tests.
 - [ ] Run and inspect [`CounterWidget.test.tsx`](./examples/CounterWidget.test.tsx).
 - [ ] Complete [`LoginCardExercise.tsx`](./exercises/LoginCardExercise.tsx) with validation, loading, success, and error states.
 - [ ] Compare your tests with [`LoginCardSolution.test.tsx`](./solutions/LoginCardSolution.test.tsx) and run `npm test`.

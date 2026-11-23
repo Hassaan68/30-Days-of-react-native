@@ -101,7 +101,7 @@ A library that drives touch gestures (pan, pinch, swipe, tap) directly on the na
 ## H
 
 **Hermes**
-An open-source JavaScript engine optimized specifically for React Native. Hermes compiles JavaScript to bytecode ahead of time, reducing app startup latency, memory usage, and bundle size.
+An open-source JavaScript engine built specifically for React Native. Rather than compiling JavaScript to native CPU machine code like a conventional native AOT compiler, Hermes precompiles JavaScript into compact **Hermes bytecode (`.hbc`)** during your app's build step and executes that bytecode in a lightweight mobile virtual machine at runtime—avoiding on-device JS parsing/compilation and cutting startup latency and memory usage.
 
 ---
 

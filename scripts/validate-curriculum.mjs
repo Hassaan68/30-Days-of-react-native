@@ -61,10 +61,12 @@ const REQUIRED_DAY_SUBDIRS = ['examples', 'exercises', 'solutions'];
 const REQUIRED_SECTIONS = [
   '## Learning Objectives',
   '## Prerequisites',
+  '## Why This Concept Matters',
   '## Introduction',
   '## Concepts',
   '## Code Examples',
   '## Step-by-Step Explanation',
+  '## Expected Output',
   '## Common Mistakes',
   '## Best Practices',
   '## Exercises',

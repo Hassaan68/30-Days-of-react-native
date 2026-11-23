@@ -23,13 +23,20 @@ By the end of Day 29, you will be able to:
 - [Day 22: Accessibility](../day-22-accessibility/README.md)
 - [Day 28: Production Readiness](../day-28-production-readiness/README.md)
 
+## Why This Concept Matters
+
+Knowing React Native concepts in isolation—hooks here, navigation there, Zod in another tutorial—is very different from wiring them together without creating a tangled monolith. Real mobile engineering teams judge codebases by how cleanly state ownership, business logic, persistence, accessibility, and error recovery fit together. Building a complete, modular capstone app bridges the gap between following daily lessons and architecting production apps independently.
+
 ## Introduction
 
 Over the past 28 days, you have learned every pillar of modern React Native development in focused daily lessons. Today is your capstone build: **PulseTrack**, a production-style **Habit & Focus Tracker** mobile app.
 
 Rather than dumping everything into one giant `App.tsx`, you will see how real mobile engineering teams wire navigation, auth guards, server state, client state, form validation, offline persistence, accessibility, error recovery, and unit tests together cleanly.
 
-> **Full Capstone Project**: Explore the complete multi-screen application architecture, store modules, services, and tests in [`projects/project-05-production-mobile-app/`](../../projects/project-05-production-mobile-app/README.md).
+> **Run & Explore PulseTrack**:
+> 1. Preview today's interactive [`HabitDashboardScreen.tsx`](./examples/HabitDashboardScreen.tsx) directly in this repository's shared Expo workspace by running `npm start` from the repo root.
+> 2. Run today's domain unit tests with `npm test -- days/day-29-production-mobile-app/examples/habitStats.test.ts`.
+> 3. Explore the complete multi-screen, modular capstone codebase (Zustand store with optimistic rollback, AsyncStorage repository, React Hook Form + Zod habit creation screen, `ErrorBoundary`, and component tests) in [`../../projects/project-05-production-mobile-app/README.md`](../../projects/project-05-production-mobile-app/README.md).
 
 ## Concepts
 
@@ -80,17 +87,23 @@ In `examples/habitStats.ts`, we store habit completions as canonical calendar ke
 
 ## Code Examples
 
+> **How to run today's examples**: Preview `HabitDashboardScreen.tsx` interactively via `npm start` in this repository's shared Expo launcher, run `habitStats.test.ts` with `npm test`, and inspect the expanded multi-screen implementation in [`../../projects/project-05-production-mobile-app/README.md`](../../projects/project-05-production-mobile-app/README.md).
+
 ### Example 1: Pure Domain Statistics Module
 
-Full source: [`./examples/habitStats.ts`](./examples/habitStats.ts)
+- **Type**: Reusable pure TypeScript domain module (zero React Native imports)
+- **Where to place in an Expo project**: `src/domain/habitStats.ts`
+- **Full source**: [`./examples/habitStats.ts`](./examples/habitStats.ts)
 
 Includes `parseCalendarDateToUtcDay()`, `calculateCurrentStreak()`, `calculateLongestStreak()`, `calculateDailySummary()`, and `groupFocusMinutesByCategory()`.
 
 ### Example 2: Automated Jest Unit Tests
 
-Full source: [`./examples/habitStats.test.ts`](./examples/habitStats.test.ts)
+- **Type**: Automated Jest unit test suite
+- **Where to place in an Expo project**: `src/domain/habitStats.test.ts` (co-located beside `habitStats.ts`)
+- **Full source**: [`./examples/habitStats.test.ts`](./examples/habitStats.test.ts)
 
-Verifies UTC calendar parsing, rollover date rejection (`2026-02-31`), streak continuity, empty-list edge cases, and category aggregation. Run it with:
+Verifies UTC calendar parsing, rollover date rejection (`2026-02-31`), streak continuity, empty-list edge cases, and category aggregation. Run it directly from the repository root:
 
 ```bash
 npm test -- days/day-29-production-mobile-app/examples/habitStats.test.ts
@@ -98,36 +111,90 @@ npm test -- days/day-29-production-mobile-app/examples/habitStats.test.ts
 
 ### Example 3: Accessible, Validated Dashboard Screen with Error Boundary
 
-Full source: [`./examples/HabitDashboardScreen.tsx`](./examples/HabitDashboardScreen.tsx)
+- **Type**: Runnable interactive screen component
+- **Where to place in an Expo project**: `app/(tabs)/index.tsx` (or `src/screens/HabitDashboardScreen.tsx`) — and previewable right away via `npm start` in this repo's shared Expo launcher
+- **Full source**: [`./examples/HabitDashboardScreen.tsx`](./examples/HabitDashboardScreen.tsx)
 
 Demonstrates `SafeAreaView` from `react-native-safe-area-context`, `FlatList` rendering, memoized summary cards, Zod form validation, accessible `Pressable` habit toggles, and `DashboardErrorBoundary`.
 
 ## Step-by-Step Explanation
 
 1. **Start with pure domain types and functions**: Writing `habitStats.ts` before touching React components lets you verify every edge case (empty lists, duplicate check-ins, invalid dates) in milliseconds with Jest.
-2. **Validate user input at the boundary**: `NewHabitSchema.safeParse()` trims whitespace and enforces length constraints before creating a new `HabitItem`, displaying the first Zod validation message cleanly via an accessible alert text element.
+2. **Validate user input at the boundary**: `NewHabitSchema.safeParse()` trims whitespace and enforces length constraints (`3–60` characters) before creating a new `HabitItem`, displaying the first Zod validation message cleanly via an accessible alert text element.
 3. **Memoize derived screen summaries**: `useMemo(() => calculateDailySummary(...), [habits, sessions])` prevents recomputing metrics unnecessarily on every keystroke inside the quick-add input.
 4. **Wrap screens in an Error Boundary**: `DashboardErrorBoundary` isolates unexpected UI errors so a malformed record never takes down the entire navigation stack.
-5. **Scale up to the full capstone project**: In [`projects/project-05-production-mobile-app/`](../../projects/project-05-production-mobile-app/README.md), this exact pattern expands across authenticated routes, persisted Zustand stores, TanStack Query optimistic updates, and multi-screen navigation.
+5. **Scale up to the full capstone project**: In [`projects/project-05-production-mobile-app/`](../../projects/project-05-production-mobile-app/README.md), this exact pattern expands across a persisted Zustand store (`useHabitStore.ts`), AsyncStorage repository (`habitRepository.ts`), dedicated `CreateHabitScreen.tsx` with React Hook Form + Zod, and React Native Testing Library component tests (`HabitCard.test.tsx`).
+
+## Expected Output
+
+### Interactive Screen (`HabitDashboardScreen.tsx` via `npm start`)
+
+When the screen mounts with its initial seed habits (`TODAY_KEY = '2026-11-23'`), you will see:
+
+```text
+┌──────────────────────────────────────────────┐
+│ PulseTrack                                   │
+│ Daily Habit & Focus Dashboard                │
+│                                              │
+│ ┌──────────┐  ┌──────────┐  ┌──────────┐     │
+│ │   33%    │  │    3d    │  │   45m    │     │
+│ │Completed │  │Best Strk │  │Focus Time│     │
+│ └──────────┘  └──────────┘  └──────────┘     │
+│                                              │
+│ [ Add a daily habit (e.g., 20m Reading) ][Add]│
+│                                              │
+│ ┌──────────────────────────────────────────┐ │
+│ │ 45m Deep Focus Sprint           [ Done ] │ │
+│ │ FOCUS • 45m goal • 3d streak             │ │
+│ └──────────────────────────────────────────┘ │
+│ ┌──────────────────────────────────────────┐ │
+│ │ Study Architecture & Testing   [ Check ] │ │
+│ │ LEARNING • 30m goal • 0d streak          │ │
+│ └──────────────────────────────────────────┘ │
+│ ┌──────────────────────────────────────────┐ │
+│ │ Evening Walk (No Phone)        [ Check ] │ │
+│ │ HEALTH • 20m goal • 0d streak            │ │
+│ └──────────────────────────────────────────┘ │
+└──────────────────────────────────────────────┘
+```
+
+- Tapping any habit row toggles its `Done` / `Check` badge and immediately recalculates the `Completed` percentage and `Best Streak` cards.
+- Submitting fewer than 3 characters displays the inline red Zod error (`"Habit name must be at least 3 characters."`) with `accessibilityRole="alert"`.
+
+### Jest Test Suite (`habitStats.test.ts`)
+
+Running `npm test -- days/day-29-production-mobile-app/examples/habitStats.test.ts` prints:
+
+```text
+PASS  days/day-29-production-mobile-app/examples/habitStats.test.ts
+  PulseTrack habitStats domain logic
+    ✓ parses valid ISO calendar dates and rejects invalid calendar dates
+    ✓ counts consecutive days ending on the reference date and ignores duplicates
+    ✓ stops counting at a missed day and returns 0 when reference date is not completed
+    ✓ finds the longest consecutive historical run across multiple gaps
+    ✓ aggregates daily completion rate, focus minutes, and longest active streak
+    ✓ handles empty habit lists without dividing by zero
+    ✓ groups focus minutes by habit category and ignores orphaned sessions
+```
 
 ## Common Mistakes
 
-- **Mixing business logic inside JSX components**: Putting streak loops directly inside `renderItem` makes logic hard to test and slows down `FlatList` scrolling. Extract pure `.ts` domain functions instead.
-- **Using `new Date('2026-11-23')` with local `.getDate()`**: Local timezone offsets can shift `'2026-11-23'` to `'2026-11-22'` for users west of UTC, breaking streaks overnight. Always parse `YYYY-MM-DD` explicitly via `Date.UTC`.
-- **Storing server responses in Zustand manually**: Duplicating remote API data in Zustand forces you to reinvent caching, invalidation, loading states, and retry logic that TanStack Query handles out of the box.
-- **Importing `SafeAreaView` from `react-native`**: Always import `SafeAreaView` from `react-native-safe-area-context` so Android edge-to-edge layouts and iOS Dynamic Island insets render reliably.
-- **Forgetting empty and error states**: Always verify how your dashboard looks with 0 habits, a failed API request, and an invalid form submission.
+- **Mixing business logic inside JSX components**: Putting streak loops directly inside `renderItem` makes logic hard to test and slows down `FlatList` scrolling. **Fix**: Extract pure `.ts` domain functions and unit-test them independently.
+- **Using `new Date('2026-11-23')` with local `.getDate()`**: Local timezone offsets can shift `'2026-11-23'` to `'2026-11-22'` for users west of UTC, breaking streaks overnight. **Fix**: Always parse `YYYY-MM-DD` explicitly via `Date.UTC`.
+- **Storing server responses in Zustand manually**: Duplicating remote API data in Zustand forces you to reinvent caching, invalidation, loading states, and retry logic. **Fix**: Use TanStack Query for remote server state and Zustand for client/UI state.
+- **Importing `SafeAreaView` from `react-native`**: The core `SafeAreaView` is deprecated and inconsistent on Android edge-to-edge screens. **Fix**: Always import `SafeAreaView` from `react-native-safe-area-context`.
+- **Forgetting empty and error states**: Always verify how your dashboard looks with `0` habits, a failed storage/API request, and an invalid form submission.
 
 ## Best Practices
 
 - **Keep domain modules framework-agnostic**: Files in `domain/` should never import `react-native`. They run instantaneously in Jest and can even be shared with a TypeScript backend.
-- **Pair optimistic UI updates with rollback**: When a user taps a habit checkbox, update the UI immediately (for crisp 60fps feedback) and revert cleanly if the API mutation fails.
+- **Pair optimistic UI updates with rollback**: When a user taps a habit checkbox, update the UI immediately (for crisp 60fps feedback) and revert cleanly if persistence or the API mutation fails.
 - **Design accessible touch targets from day one**: Ensure buttons and list items meet the 44×44 pt minimum hit area and announce checked/unchecked state to VoiceOver and TalkBack.
 - **Test edge cases explicitly**: Always test `0` items, duplicate dates, negative numbers, and malformed inputs in your unit tests.
 
 ## Exercises
 
-Open [`./exercises/README.md`](./exercises/README.md) and complete [`./exercises/StreakCalculatorExercise.ts`](./exercises/StreakCalculatorExercise.ts):
+Open [`./exercises/README.md`](./exercises/README.md) for full requirements, acceptance criteria, and hints, then complete [`./exercises/StreakCalculatorExercise.ts`](./exercises/StreakCalculatorExercise.ts):
 
 - **Beginner**: Implement `formatFocusDuration()` (`0m`, `45m`, `1h`, `1h 35m`).
 - **Intermediate**: Implement `getCompletionRatePercent()` with divide-by-zero protection and `[0, 100]` clamping.
@@ -135,11 +202,18 @@ Open [`./exercises/README.md`](./exercises/README.md) and complete [`./exercises
 
 ## Solutions
 
+Try completing all three functions in [`./exercises/StreakCalculatorExercise.ts`](./exercises/StreakCalculatorExercise.ts) and running `npm run typecheck && npm test` before revealing the solution notes below.
+
+<details>
+<summary>Click to view solution notes &amp; links</summary>
+
 Compare your work with [`./solutions/StreakCalculatorSolution.ts`](./solutions/StreakCalculatorSolution.ts):
 
-- `formatFocusDuration` guards negative numbers with `Math.max(0, Math.floor(totalMinutes))` and handles exact hours without trailing `0m`.
-- `getCompletionRatePercent` protects against `totalCount <= 0` and clamps ratios above `1`.
-- `calculateGraceStreak` reuses `parseCalendarDateToUtcDay` from `../examples/habitStats` and selects `todayDay` or `todayDay - 1` as the starting cursor before walking backward.
+- `formatFocusDuration` guards negative and fractional numbers with `Math.max(0, Math.floor(totalMinutes))` and handles exact hours without a trailing `0m`.
+- `getCompletionRatePercent` protects against `totalCount <= 0` or `completedCount <= 0` and clamps ratios above `1`.
+- `calculateGraceStreak` reuses `parseCalendarDateToUtcDay` from `../examples/habitStats` and selects `todayDay` or `todayDay - 1` as the starting cursor before walking backward through consecutive UTC day numbers.
+
+</details>
 
 ## Mini Project
 
@@ -169,9 +243,9 @@ Open [`../../projects/project-05-production-mobile-app/README.md`](../../project
 - [ ] Reviewed PulseTrack's layered architecture and state ownership model
 - [ ] Studied UTC-safe streak and analytics logic in `habitStats.ts`
 - [ ] Ran and verified all Jest tests in `habitStats.test.ts`
-- [ ] Studied accessible `Pressable` rows, Zod validation, and Error Boundary in `HabitDashboardScreen.tsx`
+- [ ] Previewed `HabitDashboardScreen.tsx` via `npm start` and reviewed its accessible `Pressable` rows, Zod validation, and Error Boundary
 - [ ] Completed Beginner, Intermediate, and Challenge exercises in `StreakCalculatorExercise.ts`
-- [ ] Explored the full capstone project in `projects/project-05-production-mobile-app/`
+- [ ] Explored the full modular capstone codebase in `projects/project-05-production-mobile-app/`
 
 ## Next Day
 

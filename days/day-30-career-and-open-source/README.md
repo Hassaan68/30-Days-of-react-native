@@ -17,11 +17,15 @@ By the end of Day 30, you will be able to:
 - [Day 29: Build a Complete Production-Style App](../day-29-production-mobile-app/README.md)
 - [Project 05: Production Mobile App (PulseTrack)](../../projects/project-05-production-mobile-app/README.md)
 
+## Why This Concept Matters
+
+Being able to build a solid React Native app is only half of landing a mobile engineering role or growing into a Senior engineer. Hiring managers and engineering teams can only evaluate what they can see and verify: clear code, working builds, honest architectural explanations, and thoughtful technical communication. Treating your portfolio, open-source contributions, and interview preparation with the same rigor you apply to production code turns 30 days of learning into lasting career momentum.
+
 ## Introduction
 
 Congratulations on reaching Day 30! Over the past month you went from core React fundamentals and styling all the way to offline persistence, native platform differences, security, EAS CI/CD, and building a complete production-style mobile app.
 
-Technical skill alone is only part of landing your next role, winning freelance clients, or growing into a Senior/Staff engineer. Today focuses on turning everything you built into visible career momentum: crafting a portfolio hiring managers actually explore, shipping open-source packages, preparing sharply for React Native interviews, and planning your long-term growth.
+Today focuses on practical, realistic next steps: mapping what companies expect at each engineering level, turning your capstone into a portfolio hiring managers can evaluate quickly, making meaningful open-source contributions, and preparing methodically for React Native technical and system design interviews.
 
 ## Concepts
 
@@ -38,14 +42,14 @@ Technical skill alone is only part of landing your next role, winning freelance 
 
 Hiring managers rarely have time to clone a repo, install CocoaPods, and troubleshoot environment variables. Make your work effortless to evaluate in 60 seconds:
 
-- **Live Preview Links**: Include a QR code or link to an EAS Update preview, TestFlight beta, or signed Android APK right at the top of your README—plus a short 20-second screen recording GIF showing real interactions.
+- **Live Preview Links**: Include a link or QR code to an EAS Update preview, TestFlight beta, or signed Android APK right at the top of your README—plus a short 20-second screen recording GIF showing real interactions.
 - **Architecture & Trade-offs Section**: Explain *why* you chose TanStack Query for server state and Zustand for UI state, how you handle token refresh, and how your offline queue resolves conflicts.
 - **Visible Engineering Rigor**: Include a green GitHub Actions CI badge running `typecheck`, `lint`, and `jest`. Clean commit history and zero dead files immediately separate strong candidates from tutorial copies.
 - **Quality Over Quantity**: Two deeply engineered apps (for example, your customized **PulseTrack** capstone plus a real-time or native-feature app) beat ten unfinished starter templates every time.
 
 ### 3. Publishing Open-Source React Native & Expo Libraries
 
-Building a focused open-source package is one of the fastest ways to learn native internals and build public credibility:
+Building a focused open-source package is a practical way to learn native internals and share useful tooling with the community:
 
 1. **Scaffold with Expo Modules API**:
    ```bash
@@ -61,7 +65,7 @@ Building a focused open-source package is one of the fastest ways to learn nativ
 You do not need to rewrite Hermes to make valuable open-source contributions. High-impact starting points include:
 - Fixing broken documentation examples or clarifying confusing Expo / React Native error messages.
 - Writing minimal reproducible bug reports (with a clean Expo Snack or tiny GitHub repo).
-- Tackling `good first issue` tickets in Expo, React Navigation, Zustand, TanStack Query, or right here in [this repository's Contributing Guide](../../CONTRIBUTING.md).
+- Tackling `good first issue` tickets in Expo, React Navigation, Zustand, TanStack Query, or right here via [this repository's Contributing Guide](../../CONTRIBUTING.md).
 
 **GitHub PR Best Practices**:
 - Keep pull requests small and focused on one clear change.
@@ -70,11 +74,11 @@ You do not need to rewrite Hermes to make valuable open-source contributions. Hi
 
 ### 5. Technical & Mobile System Design Interview Prep
 
-Senior React Native interviews typically probe five recurring areas—practice explaining both the *concept* and a *real bug you solved*:
+Senior React Native interviews typically probe five recurring areas—practice explaining both the *concept* and a *real bug or trade-off you handled*:
 
-1. **New Architecture (JSI, Fabric, TurboModules)**:
-   - *Question*: How does the New Architecture differ from the legacy asynchronous JSON bridge?
-   - *Strong Answer*: JSI (JavaScript Interface) lets JS hold direct C++ HostObject references to native modules for synchronous, zero-serialization calls; TurboModules load lazily on demand (improving cold start); Fabric brings a synchronous C++ shadow tree and React 19 concurrent rendering support.
+1. **New Architecture (JSI, Fabric, TurboModules) & Hermes**:
+   - *Question*: How does the New Architecture differ from the legacy asynchronous JSON bridge, and how does Hermes help startup?
+   - *Strong Answer*: JSI (JavaScript Interface) lets JS hold direct C++ HostObject references to native modules for synchronous, zero-serialization calls; TurboModules load lazily on demand (improving cold start); Fabric brings a synchronous C++ shadow tree and React 19 concurrent rendering support. Alongside this, Hermes precompiles JavaScript into compact `.hbc` bytecode at build time and executes it in the Hermes bytecode VM on-device, avoiding runtime JS parsing overhead.
 2. **Performance Optimization**:
    - *Question*: A feed screen drops to 25fps while scrolling on a mid-range Android phone. How do you diagnose and fix it?
    - *Strong Answer*: Profile a release build first (never debug mode), inspect unnecessary re-renders with React DevTools Profiler, verify stable `keyExtractor` and memoized row items, move heavy animations/gestures to the UI thread with Reanimated, size images cleanly with `expo-image`, and trim heavy JS work during scroll.
@@ -104,9 +108,13 @@ Target **85%+ ("Portfolio Ready")** before sending applications!
 
 ## Code Examples
 
+> **How to use today's example**: `portfolioChecklist.ts` is a **reusable TypeScript helper & reference module** (not a mobile UI screen). Import it into a small self-review script or Jest test to score your own capstone project objectively. To preview interactive UI screens elsewhere in this repository, run `npm start` from the repo root.
+
 ### Example 1: Portfolio Rubric Scorer & Career Roadmap Reference
 
-Full source: [`./examples/portfolioChecklist.ts`](./examples/portfolioChecklist.ts)
+- **Type**: Reusable helper & reference module
+- **Where to place in a project**: `scripts/portfolioChecklist.ts` (or `src/tools/portfolioChecklist.ts`)
+- **Full source**: [`./examples/portfolioChecklist.ts`](./examples/portfolioChecklist.ts)
 
 Key highlights:
 - `CAREER_ROADMAP` summarizes concrete focus areas and portfolio proof points from Junior through Staff.
@@ -115,26 +123,49 @@ Key highlights:
 ## Step-by-Step Explanation
 
 1. **Quantify your portfolio objectively**: In `portfolioChecklist.ts`, weighting Architecture, UI/Accessibility, and Testing higher (`3×`) than documentation (`2×`) reflects how hiring teams actually evaluate mobile engineering submissions.
-2. **Surface actionable next steps**: `scorePortfolioProject()` automatically groups scores `>= 4` into `strengths` and scores `<= 2` into `improvements`, turning vague self-critique into a concrete weekend polish checklist.
+2. **Surface actionable next steps**: `scorePortfolioProject()` clamps scores to `[0, 5]`, guards against zero-weight inputs, and automatically groups scores `>= 4` into `strengths` and scores `<= 2` into `improvements`, turning vague self-critique into a concrete polish checklist.
 3. **Prepare deliberately for interviews**: In the Day 30 exercises, you build a priority-weighted interview study planner so your prep time goes directly to high-weight gaps instead of re-studying topics you already know.
+
+## Expected Output
+
+Passing `DEFAULT_CAPSTONE_RUBRIC` into `scorePortfolioProject()` returns the following structured self-review summary:
+
+```text
+{
+  weightedScore: 60,
+  maxWeightedScore: 65,
+  percentage: 92,
+  grade: "Portfolio Ready",
+  strengths: [
+    "Strict TypeScript, clean folder boundaries, decoupled domain logic",
+    "Responsive layout, safe areas, empty/error states, accessibility roles & labels",
+    "Automated Jest unit/component tests passing in GitHub Actions CI",
+    "Installable preview build (TestFlight / APK / EAS Update link) with env config",
+    "README with screenshots/demo GIF, architecture diagram, setup steps, and trade-offs"
+  ],
+  improvements: []
+}
+```
+
+If you lower `tests-ci` to `2` and `shipping-eas` to `2`, the grade drops to `"Strong Foundation"` and both items appear directly in `improvements` so you know exactly what to fix next.
 
 ## Common Mistakes
 
-- **Applying with unfinished "clone" repos**: A repo with default `create-expo-app` README text and broken screenshots hurts more than it helps. Polish two strong apps instead.
-- **Memorizing buzzwords without hands-on depth**: Interviewers quickly spot candidates who repeat "JSI is faster than the bridge" without being able to explain serialization overhead or a real profiling session.
-- **Neglecting native mobile fundamentals**: Even in Expo apps, understanding iOS signing/TestFlight, Android `.aab` bundles, permissions, and app lifecycle states sets you apart from web-only developers.
-- **Waiting until you feel "100% ready" to contribute or apply**: Real engineering confidence is built by shipping, receiving code reviews, and iterating in public.
+- **Applying with unfinished "clone" repos**: A repo with default `create-expo-app` README text and broken screenshots hurts more than it helps. **Fix**: Polish two strong, original apps with clear documentation instead of uploading ten unfinished templates.
+- **Memorizing buzzwords without hands-on depth**: Interviewers quickly spot candidates who repeat "JSI is faster than the bridge" without being able to explain serialization overhead or walk through a real profiling session. **Fix**: Connect every architectural term back to code you actually built and measured.
+- **Neglecting native mobile fundamentals**: Even in Expo apps, understanding iOS signing/TestFlight, Android `.aab` bundles, permissions, and app lifecycle states sets you apart from web-only developers. **Fix**: Practise building and installing release/`preview` builds on physical devices.
+- **Waiting until you feel "100% ready" to contribute or apply**: Nobody knows every API by heart. **Fix**: Ship your capstone, open a small documentation or bug-fix PR, gather real feedback, and iterate in public.
 
 ## Best Practices
 
-- **Write short technical case studies**: A 500-word blog post or README section explaining *"How I cut FlatList frame drops and fixed DST streak bugs in PulseTrack"* is gold during interviews.
-- **Keep a "brag document"**: Record every bug fixed, performance metric improved, and app shipped—this makes resume updates and performance reviews effortless.
+- **Write short technical case studies**: A 500-word blog post or README section explaining *"How I cut FlatList frame drops and fixed DST streak bugs in PulseTrack"* gives interviewers concrete proof of your engineering judgment.
+- **Keep a "brag document"**: Record every bug fixed, performance metric improved, and app shipped—this makes resume updates and performance reviews straightforward.
 - **Stay close to official changelogs**: Read every Expo SDK and React Native release post to stay ahead of deprecations and New Architecture improvements.
-- **Give back to the community**: Answer a question on GitHub Discussions/Discord, improve a doc page, or contribute an exercise improvement back to this repository.
+- **Give back to the community**: Answer a question on GitHub Discussions/Discord, improve a doc page, or contribute an exercise improvement back via [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Exercises
 
-Open [`./exercises/README.md`](./exercises/README.md) and complete [`./exercises/InterviewPrepExercise.ts`](./exercises/InterviewPrepExercise.ts):
+Open [`./exercises/README.md`](./exercises/README.md) for full requirements, acceptance criteria, and hints, then complete [`./exercises/InterviewPrepExercise.ts`](./exercises/InterviewPrepExercise.ts):
 
 - **Beginner**: Implement `filterQuestionsByTopic()` to query a typed interview question bank by topic and optional difficulty ceiling.
 - **Intermediate**: Implement `calculateInterviewReadiness()` to compute average mastery, detect weak topics (`< 75%`), and flag critical gaps (`< 60%`).
@@ -142,11 +173,18 @@ Open [`./exercises/README.md`](./exercises/README.md) and complete [`./exercises
 
 ## Solutions
 
+Try implementing all three functions in [`./exercises/InterviewPrepExercise.ts`](./exercises/InterviewPrepExercise.ts) and running `npm run typecheck && npm run lint` before revealing the solution notes below.
+
+<details>
+<summary>Click to view solution notes &amp; links</summary>
+
 Compare your work with [`./solutions/InterviewPrepSolution.ts`](./solutions/InterviewPrepSolution.ts):
 
 - `filterQuestionsByTopic` keeps input arrays immutable using `.filter()`.
-- `calculateInterviewReadiness` clamps out-of-range percentages safely to `[0, 100]`, sorts weak topics ascending, and requires both `averageMastery >= 80` and zero topics below `60%`.
-- `buildStudyPlan` calculates weighted priority scores, sorts descending, and slices cleanly to `sessionsPerWeek`.
+- `calculateInterviewReadiness` clamps out-of-range percentages safely to `[0, 100]`, sorts weak topics (`< 75%`) ascending by mastery, and requires both `averageMastery >= 80` and zero topics below `60%`.
+- `buildStudyPlan` calculates weighted priority scores `(100 - clampedMastery) * safeWeight`, sorts descending, slices cleanly to `Math.floor(sessionsPerWeek)`, and returns `{ sessionNumber, topic, priorityScore }` entries.
+
+</details>
 
 ## Mini Project
 
@@ -155,14 +193,14 @@ Compare your work with [`./solutions/InterviewPrepSolution.ts`](./solutions/Inte
 Turn your 30-day work into a career-ready showcase:
 1. Fork or customize [Project 05: PulseTrack](../../projects/project-05-production-mobile-app/README.md) with at least two unique features of your own.
 2. Score it honestly using `scorePortfolioProject()` from `examples/portfolioChecklist.ts` and polish every criterion scoring below `4`.
-3. Record a 20-second demo video/GIF, add an architecture diagram to the README, publish a live preview build with EAS, and share your project on GitHub and LinkedIn!
+3. Record a 20-second demo video/GIF, add an architecture diagram to the README, publish a live preview build with EAS (free tier) or local release build, and share your project on GitHub and LinkedIn.
 
 ## Key Takeaways
 
 - Career growth in React Native moves from building clean screens (Junior) → owning full features & quality (Mid) → architecting resilient systems & native modules (Senior) → scaling mobile platforms (Staff).
 - Two deeply engineered, tested, live-previewable apps beat a dozen half-finished tutorials.
-- Publishing a small `create-expo-module` library or contributing clean open-source PRs builds real credibility and native mastery.
-- Prepare for interviews by connecting New Architecture, performance, offline sync, native integration, and testing concepts back to real code you shipped.
+- Publishing a small `create-expo-module` library or contributing focused open-source PRs builds real native understanding and public credibility.
+- Prepare for interviews by connecting New Architecture, Hermes bytecode execution, performance, offline sync, native integration, and testing concepts back to real code you shipped.
 
 ## Further Reading
 

@@ -19,6 +19,10 @@ By the end of Day 03, you will be able to:
 - Completed [Day 02: JavaScript and TypeScript for React Native](../day-02-javascript-typescript/README.md).
 - Comfortable with TypeScript interfaces, destructuring, arrow functions, and `.map()` / `.filter()`.
 
+## Why This Concept Matters
+
+Every real React Native app—whether a banking dashboard, social feed, or checkout flow—is a tree of small, composable React components. Knowing how to type props cleanly, isolate state where it belongs, derive values during render instead of duplicating state, and render keyed lists safely is what separates maintainable production apps from fragile, buggy screens.
+
 ## Introduction
 
 React introduces a **declarative** way to build user interfaces. Instead of writing step-by-step instructions like *"find the button, change its color, hide the error banner, and insert three list items,"* you describe **what the UI should look like for a given state**, and React handles updating the native iOS and Android views for you.
@@ -48,6 +52,12 @@ export function GreetingBanner() {
   );
 }
 ```
+
+> **React Web vs. React Native (Component Rules):** Coming from web React? Keep four differences front of mind:
+> - **No HTML tags:** There is no `<div>`, `<span>`, `<p>`, or `<button>`—always import `<View>`, `<Text>`, and `<Pressable>` from `'react-native'`.
+> - **No `onClick`:** Mobile touch events use **`onPress`** (plus `onLongPress`, `onPressIn`, `onPressOut`) on `<Pressable>`.
+> - **Every string must live inside `<Text>`:** Placing bare text or a stray `0` inside `<View>` throws a runtime crash in React Native (whereas browsers happily render it).
+> - **No `className`:** Pass style objects or arrays via the `style` prop using `StyleSheet.create(...)`.
 
 ### 2. Typed Props, Default Props, and `PropsWithChildren`
 
@@ -138,10 +148,13 @@ React uses `key` to match items between renders so it knows which items were add
 
 ## Code Examples
 
+- **Where to place in an Expo project:** Place reusable UI components like `ProfileCard.tsx` and `CourseList.tsx` inside `components/` (for example, `components/ProfileCard.tsx`) and render them inside a route screen such as `app/index.tsx`.
+- **Preview immediately:** Run `npm start` from the repository root to open the shared Expo launcher and interact with Day 03's live screens right away on iOS, Android, or Web.
+
 Inspect both examples in `./examples/`:
 
-1. [`./examples/ProfileCard.tsx`](./examples/ProfileCard.tsx) — Demonstrates component composition (`CardContainer` with `PropsWithChildren`, `StatusPill`, and `ProfileCard`), optional/default props, `useState` follow toggle, and safe conditional rendering.
-2. [`./examples/CourseList.tsx`](./examples/CourseList.tsx) — Demonstrates rendering lists with stable `key`s, filtering state (`'all' | 'active' | 'completed'`), immutable state updates (`map`), and early-return empty states.
+1. [`./examples/ProfileCard.tsx`](./examples/ProfileCard.tsx) *(reusable interactive component)* — Demonstrates component composition (`CardContainer` with `PropsWithChildren`, `SkillTag`, and `ProfileCard`), optional/default props, `useState` follow toggle, and safe conditional rendering.
+2. [`./examples/CourseList.tsx`](./examples/CourseList.tsx) *(runnable interactive component / screen)* — Demonstrates rendering lists with stable `key`s, filtering state (`'all' | 'active' | 'completed'`), immutable state updates (`map`), and early-return empty states.
 
 Here is an excerpt from [`./examples/ProfileCard.tsx`](./examples/ProfileCard.tsx):
 
@@ -169,6 +182,32 @@ export function CardContainer({
 3. **Safe Conditional Rendering:** When `bio` is provided, we check `Boolean(bio)` (or `bio !== undefined && bio.length > 0`) before rendering `<Text>{bio}</Text>`, preventing raw falsy strings or numbers from crashing React Native.
 4. **Interactive List Filtering (`CourseList.tsx`):** We keep the source `courses` array in state and the active `filter` (`'all' | 'active' | 'completed'`) in state. Notice we do **not** store `filteredCourses` in a separate `useState`—we compute it directly during render from `courses` and `filter` so state can never fall out of sync!
 5. **Stable Keys & Immutable Toggling:** Every course card uses `key={course.id}`. Pressing a course calls `setCourses((prev) => prev.map(...))` to flip `completed` immutably.
+
+## Expected Output
+
+When rendered in Expo, **`CourseList`** displays an interactive curriculum checklist that updates live as you tap filters or course rows:
+
+```text
+Curriculum Checklist
+2 of 4 lessons completed
+
+[ All ]  ( Active )  ( Completed )
+
++--------------------------------------------+
+| [✓]  DAY 01                                |
+|      ~~Introduction to React Native~~      |
++--------------------------------------------+
+| [✓]  DAY 02                                |
+|      ~~TypeScript for Mobile Apps~~        |
++--------------------------------------------+
+| [ ]  DAY 03                                |
+|      React Fundamentals                    |
++--------------------------------------------+
+```
+
+- Tapping any course row toggles its green checkmark, crosses out the title, and updates **`X of 4 lessons completed`** immediately.
+- Switching filter chips (`All`, `Active`, `Completed`) filters the list live; if every lesson is completed and you tap **Active**, the empty-state box displays **`No lessons match the "active" filter.`**.
+- **`ProfileCard`** renders a circular initials avatar, optional bio, wrapped skill tags, and a **Follow / Following** button that highlights the card border in blue and increments the follower count by 1.
 
 ## Common Mistakes
 
@@ -207,9 +246,18 @@ Add a reusable `Panel` wrapper component typed with `PropsWithChildren`, add fil
 
 ## Solutions
 
-Compare your completed component with the reference solution:
+Build `BadgeListExercise.tsx` on your own first before expanding the solution walkthrough below.
+
+<details>
+<summary>Click to view solution notes &amp; links</summary>
 
 - [`./solutions/BadgeListSolution.tsx`](./solutions/BadgeListSolution.tsx): Complete implementation featuring `Panel` (`PropsWithChildren`), `BadgePill`, immutable badge toggling, filter tabs, derived summary counts, and safe empty-state rendering.
+- **Key details to compare:**
+  - `earnedCount` and `allEarned` are computed straight from `badges` during render—never stored in redundant `useState`.
+  - Conditional celebration banner uses `{allEarned && (<View>...</View>)}` where `allEarned` is strictly a `boolean`.
+  - Filter buttons map over a typed `readonly BadgeFilter[]` (`'all' | 'earned' | 'locked'`) so TypeScript catches typos at compile time.
+
+</details>
 
 ## Mini Project
 

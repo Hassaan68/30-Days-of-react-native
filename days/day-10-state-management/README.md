@@ -7,7 +7,7 @@ By the end of Day 10, you will be able to:
 - Distinguish between **local UI state**, **shared app/client state**, and **server/async state**—and pick the right tool for each.
 - Lift state cleanly and build a **typed React Context** with a custom consumer hook and memoization/splitting to prevent unnecessary re-renders.
 - Create scalable client stores with **Zustand v5** (`create`, fine-grained selectors, and `useShallow` from `zustand/react/shallow`).
-- Persist Zustand state across app restarts using `persist` middleware + `@react-native-async-storage/async-storage`, including `partialize` and hydration tracking (`onRehydrateStorage`).
+- Persist Zustand state across app restarts and OS background kills using `persist` middleware + `@react-native-async-storage/async-storage`, including `partialize` and hydration tracking (`onRehydrateStorage`).
 - Design a clean, modular state architecture that scales across dozens of screens.
 
 ## Prerequisites
@@ -15,11 +15,15 @@ By the end of Day 10, you will be able to:
 - Completed [Day 09: Forms and Validation](../day-09-forms-and-validation/README.md).
 - Comfortable with React hooks (`useState`, `useMemo`, `useCallback`, `useContext`) and TypeScript generics.
 
+## Why This Concept Matters
+
+As soon as an app grows past two or three screens, scattered state becomes the #1 source of bugs: a shopping cart badge on a tab icon disagrees with the checkout screen, a user's dark mode setting resets every time iOS or Android terminates the app in the background, or a naive global Context triggers dozens of unnecessary re-renders during scroll animations. Choosing the right state layer—local `useState`, split Context, Zustand v5 with `useShallow`, or TanStack Query—keeps your app fast, predictable, and easy to maintain.
+
 ## Introduction
 
 Almost every bug in a growing mobile app comes down to state: a badge count that falls out of sync with the cart screen, a dark-mode toggle that resets after reopening the app, or a Context provider that causes 40 components to re-render whenever a single timer ticks.
 
-The secret to great state management in modern React Native isn't putting *everything* into one giant global store—it's placing each piece of state in the **smallest, most specialized layer** that fits its lifecycle. Today you will master React Context, Zustand v5, and AsyncStorage persistence, and learn exactly when to use each (and when to leave data to TanStack Query on Day 11).
+The secret to great state management in modern React Native isn't putting *everything* into one giant global store—it's placing each piece of state in the **smallest, most specialized layer** that fits its lifecycle. Today you will master React Context, Zustand v5, and AsyncStorage persistence, and learn exactly when to use each (and when to leave server data to TanStack Query on Day 11).
 
 ## Concepts
 
@@ -33,6 +37,16 @@ The secret to great state management in modern React Native isn't putting *every
 | **Server / remote cache state** | User profile from API, feed posts, paginated lists | **TanStack Query v5** (Day 11!) |
 
 Keeping server data out of Zustand and keeping ephemeral UI toggles in local `useState` dramatically simplifies your codebase.
+
+### React Web vs. React Native: Web vs. Mobile State Persistence
+
+If you are used to browser `localStorage` on the web, persisting state on mobile comes with three important differences:
+
+| Aspect | Web (`localStorage`) | Mobile (`@react-native-async-storage/async-storage`) |
+| --- | --- | --- |
+| **App Lifecycle** | Browser tabs stay open until closed or refreshed by the user. | iOS and Android aggressively **suspend and kill backgrounded apps** to reclaim RAM—in-memory state vanishes whenever the user switches to a camera or game and comes back later. |
+| **Sync vs. Async API** | `localStorage.getItem()` is **synchronous**, so initial state is available on the very first render. | `AsyncStorage.getItem()` is **asynchronous** (`Promise<string | null>`). Your store briefly mounts with default values before disk data arrives—track `hasHydrated` in `onRehydrateStorage` to prevent theme flicker or premature redirects! |
+| **Sensitive Data** | Avoid storing secrets in `localStorage` due to XSS. | `AsyncStorage` is **unencrypted** key-value storage. Store harmless preferences (theme, font size, draft filters) in `AsyncStorage`, and store auth tokens in **`expo-secure-store`** (Day 12 & Day 23). |
 
 ### 2. Lifting State Up & React Context Done Right
 
@@ -90,7 +104,7 @@ export function useCartSummary() {
 
 ### 4. Persisting Zustand State with AsyncStorage
 
-Mobile users expect settings like dark mode, font size, and notification preferences to survive closing the app. Zustand's `persist` middleware pairs directly with `@react-native-async-storage/async-storage`:
+Mobile users expect settings like dark mode, font size, and notification preferences to survive closing the app (or OS background termination). Zustand's `persist` middleware pairs directly with `@react-native-async-storage/async-storage`:
 
 ```ts
 export const usePreferencesStore = create<PreferencesState>()(
@@ -135,23 +149,54 @@ Each store stays small, self-contained, and trivial to unit-test.
 
 ## Code Examples
 
-Review both strictly typed examples for this day:
+> **How to use these state modules**: Both files below are **reusable state modules** (not standalone screens)—import them into screens inside your Expo app or into Jest tests!
+> - **In this repository**: Import `ThemeProvider` / `useTheme` or `useCartStore` / `useCartSummary` inside the shared Expo workspace (`npm start`) to experiment interactively, and validate strict types and lint with `npm run typecheck`, `npm run lint`, and `npm test`.
+> - **In your own Expo project**: Place each module at the suggested path below so any screen can import it cleanly.
 
-1. **[examples/ThemeContext.tsx](./examples/ThemeContext.tsx)** — Typed `ThemeProvider` integrating `useColorScheme()`, split `ThemeStateContext` / `ThemeActionsContext`, and safe `useTheme()` / `useThemeActions()` hooks.
-2. **[examples/useCartStore.ts](./examples/useCartStore.ts)** — Zustand v5 shopping cart store with immutable CRUD actions, reusable pure selectors (`selectCartItemCount`, `selectCartSubtotalCents`), and a `useCartSummary()` hook using `useShallow`.
+1. **Split-Context Theme Provider (Reusable Provider Module)**
+   - **File**: [`./examples/ThemeContext.tsx`](./examples/ThemeContext.tsx)
+   - **Type**: Reusable React Context provider + hooks module (`ThemeProvider`, `useTheme`, `useThemeActions`)
+   - **Suggested Expo placement**: `shared/theme/ThemeContext.tsx` (wrap your root `app/_layout.tsx` in `<ThemeProvider>`)
+   - **What it shows**: Integrates `useColorScheme()`, splits `ThemeStateContext` and `ThemeActionsContext` so toggle buttons don't re-render on color changes, and throws helpful errors if hooks are called outside `<ThemeProvider>`.
+
+2. **Zustand v5 Shopping Cart Store (Reusable Store Module)**
+   - **File**: [`./examples/useCartStore.ts`](./examples/useCartStore.ts)
+   - **Type**: Reusable Zustand v5 store + pure selectors module (`useCartStore`, `selectCartItemCount`, `selectCartSubtotalCents`, `useCartSummary`)
+   - **Suggested Expo placement**: `features/cart/store/useCartStore.ts`
+   - **What it shows**: Curried `create<CartState>()(...)`, immutable CRUD actions (`addItem`, `removeItem`, `updateQuantity`, `clearCart`), pure derived selectors, and a `useCartSummary()` hook wrapped in `useShallow`.
 
 ## Step-by-Step Explanation
 
 1. **Follow system appearance with `useColorScheme()`**: In `ThemeContext.tsx`, when `preference === 'system'`, the provider derives `'light'` or `'dark'` from the device's OS setting automatically.
-2. **Split read vs write contexts**: Components that only render a "Switch Theme" button call `useThemeActions()`, so they never re-render when `colors` change.
+2. **Split read vs. write contexts**: Components that only render a `"Switch Theme"` button call `useThemeActions()`, so they never re-render when `colors` change.
 3. **Use curried `create<State>()(...)` in TypeScript**: Zustand v5 uses double parentheses `create<CartState>()(...)` so middleware like `persist` infers types accurately without manual workarounds.
 4. **Compute derived values in selectors, not duplicated state**: Notice `useCartStore` does **not** store `itemCount` or `subtotalCents` as separate mutable fields. Computing them in pure selectors guarantees they can never drift out of sync with `items`.
 5. **Wrap multi-field object selectors in `useShallow`**: Returning `{ itemCount, subtotalCents, isEmpty }` inside `useShallow` performs a shallow property comparison so components re-render only when one of those three values actually changes.
 
+## Expected Output
+
+Because `ThemeContext.tsx` and `useCartStore.ts` are reusable modules, here is the observable behavior when wired into your screens or exercised in code/tests:
+
+```text
+// Using useCartStore + selectors:
+useCartStore.getState().addItem({ id: 'rn-book', name: 'RN Handbook', priceCents: 2900 });
+useCartStore.getState().addItem({ id: 'rn-book', name: 'RN Handbook', priceCents: 2900 });
+
+// In any screen calling useCartSummary():
+// → { itemCount: 2, subtotalCents: 5800, isEmpty: false }
+
+useCartStore.getState().updateQuantity('rn-book', 0);
+// → Removes item cleanly: { itemCount: 0, subtotalCents: 0, isEmpty: true }
+```
+
+- **In `ThemeContext`**: Calling `cyclePreference()` cycles `'system' → 'light' → 'dark' → 'system'`. Components using `useTheme()` update their palette immediately, while a button component reading only `useThemeActions()` avoids re-rendering when `colors` change.
+- **In `PreferencesStoreSolution` (persisted store)**: Changing `themeMode` to `'dark'` and `dailyReminderHour` to `20`, then force-closing and relaunching the app via `npm start`, rehydrates `themeMode: 'dark'` and `dailyReminderHour: 20` from `AsyncStorage` and flips `hasHydrated` from `false` → `true`.
+
 ## Common Mistakes
 
 - **Calling `useCartStore()` Without a Selector**: Subscribing to the entire store object re-renders the component on every state mutation, defeating Zustand's biggest performance advantage.
-- **Returning Unmemoized Objects from Zustand v5 Selectors**: Writing `useCartStore((s) => ({ a: s.a, b: s.b }))` without `useShallow` triggers infinite re-render warnings in React 19 / Zustand v5!
+- **Returning Unmemoized Objects from Zustand v5 Selectors**: Writing `useCartStore((s) => ({ a: s.a, b: s.b }))` without `useShallow` triggers infinite re-render errors (`getSnapshot should be cached`) in React 19 / Zustand v5!
+- **Assuming Persisted State Is Available Synchronously on Mount**: Unlike web `localStorage`, `AsyncStorage` is async. Check `hasHydrated` before making one-time decisions (like onboarding redirects or splash-screen dismissal).
 - **Storing API Responses in Zustand Manually**: Writing manual `isLoading`, `error`, and `data` flags in Zustand for every endpoint re-invents caching poorly. Use TanStack Query (Day 11) for server state.
 - **Saving Sensitive Secrets in `AsyncStorage` Persist**: `AsyncStorage` is unencrypted on device storage. Persist harmless preferences in `AsyncStorage`, and store access/refresh tokens in `expo-secure-store`.
 - **Mutating Arrays In-Place Inside `set()`**: Calling `state.items.push(product)` mutates the previous reference so React never detects a change. Always return new arrays (`[...state.items, ...]`, `.map()`, `.filter()`).
@@ -166,7 +211,7 @@ Review both strictly typed examples for this day:
 
 ## Exercises
 
-Head to [exercises/README.md](./exercises/README.md) and open [exercises/PreferencesStoreExercise.ts](./exercises/PreferencesStoreExercise.ts).
+Head to [`./exercises/README.md`](./exercises/README.md) for detailed requirements, acceptance criteria, and hints, then open [`./exercises/PreferencesStoreExercise.ts`](./exercises/PreferencesStoreExercise.ts):
 
 ### Beginner
 Complete `setThemeMode`, `setFontScale`, `toggleNotifications`, and `setDailyReminderHour` (clamping the hour to an integer between `0` and `23`).
@@ -179,24 +224,38 @@ Implement `resetPreferences()` (restoring defaults without resetting `hasHydrate
 
 ## Solutions
 
+Try completing all three exercise levels in `PreferencesStoreExercise.ts` first before viewing the reference solution!
+
+<details>
+<summary>Click to view solution notes &amp; links</summary>
+
 Compare your work against the complete reference solution:
 
-- **[solutions/PreferencesStoreSolution.ts](./solutions/PreferencesStoreSolution.ts)** — Full persisted Zustand v5 store with hour clamping, `AsyncStorage` persistence, `partialize`, `onRehydrateStorage` hydration tracking, `resetPreferences`, and `useShallow`.
+- **[`./solutions/PreferencesStoreSolution.ts`](./solutions/PreferencesStoreSolution.ts)**
+
+Key highlights in the reference solution:
+- Extracts a tiny `clampHour(hour)` helper (`Math.min(23, Math.max(0, Math.round(hour)))`) so decimals and out-of-range numbers are always normalized cleanly.
+- Uses curried `create<PreferencesState>()(persist((set) => ({ ... }), { ... }))` with `createJSONStorage(() => AsyncStorage)` and `partialize` returning strictly `PreferencesData`.
+- Marks hydration complete inside `onRehydrateStorage: () => (state) => { state?.setHasHydrated(true); }`.
+- Preserves `hasHydrated` inside `resetPreferences: () => set({ ...DEFAULT_PREFERENCES })` because Zustand merges partial state objects at the top level.
+- Uses `useShallow` inside `useDisplayPreferences()` so toggling notifications never triggers re-renders in theme or typography consumers.
+
+</details>
 
 ## Mini Project
 
 **Persisted Settings & Mini Cart Playground**: Build a two-tab screen combining today's patterns:
 
-1. **Shop Tab**: Displays 4 courses/products with "Add to Cart" buttons powered by `useCartStore` and a sticky header badge powered by `useCartSummary()`.
+1. **Shop Tab**: Displays 4 courses/products with `"Add to Cart"` buttons powered by `useCartStore` and a sticky header badge powered by `useCartSummary()`.
 2. **Settings Tab**: Lets the user switch `themeMode` (`system`, `light`, `dark`), pick `fontScale`, toggle notifications, and reset preferences—all persisted via `PreferencesStoreSolution.ts`.
 3. Close and reload the app to confirm your settings automatically rehydrate from `AsyncStorage`.
 
 ## Key Takeaways
 
 - Match each piece of state to the right layer: local `useState`, React Context (environment), Zustand v5 (shared client state), and TanStack Query (server state).
+- Unlike browser `localStorage`, mobile `AsyncStorage` is asynchronous and apps get killed in the background—always pair `persist` with `partialize` and `hasHydrated` tracking.
 - Typed React Context with split state/actions avoids cascading re-renders across your app tree.
 - Zustand v5 selectors + `useShallow` provide fine-grained reactivity with minimal boilerplate.
-- Always pair `persist` + `AsyncStorage` with `partialize` and `onRehydrateStorage` (`hasHydrated`) for reliable mobile persistence.
 
 ## Further Reading
 
@@ -208,6 +267,7 @@ Compare your work against the complete reference solution:
 ## Progress Checklist
 
 - [ ] Can decide cleanly between local state, Context, Zustand, and TanStack Query
+- [ ] Understood why mobile state persistence (`AsyncStorage`) is asynchronous and requires hydration tracking
 - [ ] Built a typed React Context with split state/actions and custom consumer hooks
 - [ ] Built a Zustand v5 store with immutable updates and derived selectors
 - [ ] Used `useShallow` safely for multi-field selectors in Zustand v5

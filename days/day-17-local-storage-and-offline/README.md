@@ -3,6 +3,7 @@
 ## Learning Objectives
 
 By the end of Day 17, you will be able to:
+
 - Choose the right local storage engine for every data type: `@react-native-async-storage/async-storage`, `expo-secure-store`, or `expo-sqlite`.
 - Read and write structured relational data using the modern `expo-sqlite` async API in Expo SDK 58 (`openDatabaseAsync`, `execAsync`, `runAsync`, `getAllAsync`, `withTransactionAsync`).
 - Store sensitive credentials securely in the OS Keychain (iOS) / Keystore (Android) with `expo-secure-store`.
@@ -13,6 +14,10 @@ By the end of Day 17, you will be able to:
 
 - Completed [Day 16: Lists and Performance](../day-16-lists-and-performance/README.md).
 - Familiar with async/await, Promises, REST APIs (Day 11), and authentication tokens (Day 12).
+
+## Why This Concept Matters
+
+Mobile apps run in environments web developers rarely think about: underground subways, airplane mode, crowded stadiums, and elevators where Wi-Fi hands off to spotty 4G. If your app loses a user's notes, blocks the screen with an endless spinner, or stores login tokens in unencrypted plaintext, users quickly lose trust and uninstall. Local storage and offline queues let your app feel instantaneous on every launch, protect sensitive credentials with hardware-backed OS encryption, and sync changes reliably whenever connectivity returns.
 
 ## Introduction
 
@@ -31,6 +36,12 @@ Choosing the wrong storage tool causes security vulnerabilities or performance b
 | `@react-native-async-storage/async-storage` | Unencrypted key-value store (RocksDB/SQLite) | UI preferences, theme, onboarding flags, small caches, offline mutation queues | Passwords, JWTs, refresh tokens, large queryable datasets |
 | `expo-secure-store` | iOS Keychain / Android EncryptedSharedPreferences (Keystore) | Access/refresh tokens, encryption keys, PIN hashes, small secrets (< 2 KB per value) | Large blobs, lists of notes, high-frequency writes |
 | `expo-sqlite` | Embedded relational SQLite database | Notes, tasks, messages, search/filtering, joins, offline caches of hundreds or thousands of records | Unencrypted secrets (unless encrypted at column/app layer) |
+
+> **React Web vs. React Native: `localStorage` & IndexedDB vs. Mobile Storage**
+>
+> - **Web `localStorage` (sync, plaintext) → `@react-native-async-storage/async-storage` (async, plaintext):** Unlike `window.localStorage`, AsyncStorage is asynchronous so disk I/O never blocks the UI thread — and just like `localStorage`, it is **unencrypted**, so never store auth tokens there.
+> - **Web `HttpOnly` cookies (server-managed secrets) → `expo-secure-store` (OS Keychain / Android Keystore):** Mobile apps do not rely on browser cookie jars for API auth. Instead, store small secrets like JWT refresh tokens in `expo-secure-store`, which encrypts them with OS-managed keys.
+> - **Web IndexedDB (large structured client store) → `expo-sqlite` (embedded SQL engine):** When you need indexing, `LIKE` search, sorting, transactions, or thousands of offline records, `expo-sqlite` gives you full relational SQL natively on iOS and Android. *(Note: Expo SDK 58 removed the experimental `syncLibSQL()` remote sync method from `expo-sqlite` — pair local `expo-sqlite` with your own REST/GraphQL mutation queue or a dedicated sync engine instead.)*
 
 ### 2. Modern `expo-sqlite` API in Expo SDK 58
 
@@ -67,7 +78,10 @@ A resilient offline-first flow combines four building blocks:
 
 ### Example 1: SQLite Notes Database with Migrations
 
-See [`examples/notesDatabase.ts`](./examples/notesDatabase.ts) for the complete implementation.
+- **Type**: Reusable helper/module (pure TypeScript storage class, no UI)
+- **File**: [`examples/notesDatabase.ts`](./examples/notesDatabase.ts)
+- **Where to place in an Expo project**: Save under `src/features/notes/storage/notesDatabase.ts` (or `src/shared/storage/notesDatabase.ts`) and import `NotesDatabase` into your notes hook or repository.
+- **How to run**: Wire a screen to `new NotesDatabase()` and launch this repository's shared Expo launcher with `npm start` (or `npm run ios` / `npm run android`) to create, search, and update persisted notes across app restarts.
 
 ```ts
 const db = await SQLite.openDatabaseAsync('offline_notes.db');
@@ -92,7 +106,10 @@ if ((versionRow?.user_version ?? 0) < 1) {
 
 ### Example 2: Durable Offline Mutation Queue & Conflict Resolver
 
-See [`examples/offlineQueue.ts`](./examples/offlineQueue.ts) for the full queue + conflict resolver.
+- **Type**: Reusable helper/module (AsyncStorage-backed queue + pure `resolveConflict` utility)
+- **File**: [`examples/offlineQueue.ts`](./examples/offlineQueue.ts)
+- **Where to place in an Expo project**: Save under `src/shared/offline/offlineQueue.ts` and call `queue.enqueue(...)` on local mutations and `queue.flush(...)` when connectivity returns.
+- **How to run**: Import `OfflineMutationQueue` alongside `NotesDatabase` inside a screen and run `npm start` in the shared Expo launcher — or test `resolveConflict` directly in a Jest unit test via `npm test`.
 
 ```ts
 const queue = new OfflineMutationQueue();
@@ -119,6 +136,31 @@ const report = await queue.flush(
 4. **Resilient FIFO queue flushing**: `OfflineMutationQueue.flush` checks `isOnline()` before every item. If connectivity drops halfway through, remaining items stay safely persisted without burning retry attempts.
 5. **Bounded retries**: Failed items increment `attempts` and record `lastError`, preventing a permanently broken payload from looping forever.
 
+## Expected Output
+
+Because `notesDatabase.ts` and `offlineQueue.ts` are reusable storage modules, invoking them from a screen or test produces deterministic local persistence and sync reports:
+
+```text
+// 1. Creating a note locally via NotesDatabase.createNote(...)
+{
+  id: 1,
+  title: "Offline Draft",
+  body: "Written on airplane mode",
+  updatedAt: "2026-11-23T22:00:00.000Z",
+  synced: false
+}
+
+// 2. Enqueueing while offline & flushing once connectivity returns:
+// Offline flush()  -> { succeeded: 0, failed: 0, remaining: 1 }
+// Online  flush()  -> { succeeded: 1, failed: 0, remaining: 0 }
+
+// 3. After NotesDatabase.markNotesSynced([1]) and cold-restarting the app:
+// listNotes() returns the saved note immediately with `synced: true`.
+```
+
+- Calling `listNotes('airplane')` returns only matching rows using parameterized SQL `LIKE ?` queries — even if the query contains apostrophes (`O'Brien`).
+- Force-closing and reopening the Expo app preserves both SQLite rows and any unsent items in `OfflineMutationQueue`.
+
 ## Common Mistakes
 
 - **Importing `AsyncStorage` from `react-native`**: It was removed from React Native core years ago. Always import from `@react-native-async-storage/async-storage`.
@@ -137,7 +179,7 @@ const report = await queue.flush(
 
 ## Exercises
 
-Head to [`exercises/README.md`](./exercises/README.md) and open [`exercises/StorageHelperExercise.ts`](./exercises/StorageHelperExercise.ts):
+Head to [`exercises/README.md`](./exercises/README.md) for detailed requirements, acceptance criteria, and hints, then open [`exercises/StorageHelperExercise.ts`](./exercises/StorageHelperExercise.ts):
 
 1. **Beginner**: Implement `preferencesStorage` (`save`, `load`, `clear`) backed by `@react-native-async-storage/async-storage`.
 2. **Intermediate**: Implement `secureTokenStorage` (`save`, `load`, `clear`) backed by `expo-secure-store` with safe JSON parsing and validation.
@@ -145,13 +187,23 @@ Head to [`exercises/README.md`](./exercises/README.md) and open [`exercises/Stor
 
 ## Solutions
 
-Compare your work against the complete reference solution:
+Try implementing the storage helpers yourself before checking the reference code.
 
-- [`solutions/StorageHelperSolution.ts`](./solutions/StorageHelperSolution.ts): Demonstrates clean separation between unencrypted AsyncStorage preferences and Keychain/Keystore-backed SecureStore tokens, complete with runtime type guards.
+<details>
+<summary>Click to view solution notes &amp; links</summary>
+
+- **Reference implementation**: [`solutions/StorageHelperSolution.ts`](./solutions/StorageHelperSolution.ts)
+- **What changed**:
+  - `readJson<T>` reads the raw string from `AsyncStorage.getItem(key)`, parses it into `unknown` inside a `try / catch`, validates with `guard(parsed)`, and returns `fallback` whenever the value is missing, malformed JSON, or schema-mismatched.
+  - `preferencesStorage` delegates `load()` directly to `readJson(PREFERENCES_KEY, isUserPreferences, DEFAULT_PREFERENCES)` and uses `AsyncStorage.setItem` / `AsyncStorage.removeItem` for `save` / `clear`.
+  - `secureTokenStorage` persists serialized tokens via `SecureStore.setItemAsync`, safely parses and validates via `isAuthTokens` in `load()` (returning `null` on missing or corrupted data), and deletes via `SecureStore.deleteItemAsync` using the SecureStore-safe key `app_auth_tokens_v1`.
+
+</details>
 
 ## Mini Project
 
 Build an **Offline-Capable Field Notes Screen**:
+
 - Persist notes in `NotesDatabase` (`expo-sqlite`) so they load instantly on cold launch.
 - Show an "Unsynced" badge next to notes where `synced === false`.
 - Enqueue `CREATE`/`UPDATE`/`DELETE` edits into `OfflineMutationQueue` and add a "Sync Now" button that simulates an API call (with an optional "Simulate Offline" toggle to test retry behavior).
@@ -159,7 +211,7 @@ Build an **Offline-Capable Field Notes Screen**:
 ## Key Takeaways
 
 - Match each data category to the right storage engine: **AsyncStorage** for preferences, **SecureStore** for secrets, **SQLite** for structured/queryable offline data.
-- Modern `expo-sqlite` (SDK 58+) offers clean async transactions and parameterized queries; remember `syncLibSQL()` is no longer part of Expo SDK 58.
+- Modern `expo-sqlite` (SDK 58+) offers clean async transactions and parameterized queries; remember `syncLibSQL()` was removed in Expo SDK 58.
 - Never trust raw `JSON.parse` output from persistent storage without validating its shape.
 - Offline-first apps combine optimistic local writes, a durable FIFO queue, idempotency keys, and an explicit conflict resolution strategy.
 

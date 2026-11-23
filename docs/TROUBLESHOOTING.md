@@ -208,6 +208,32 @@ function getErrorMessage(error: unknown): string {
 
 When using Expo Router typed routes, ensure dynamic route params match the file name (e.g., `app/tasks/[id].tsx` expects `{ pathname: '/tasks/[id]', params: { id: '42' } }`) and restart Metro or your TypeScript server (`Cmd/Ctrl + Shift + P` → **TypeScript: Restart TS Server**) after creating new route files.
 
+### React Native 0.88 Strict TypeScript API Pitfalls
+
+React Native 0.88 enables the Strict TypeScript API by default, which surfaces several common compiler errors if you follow older tutorials:
+
+1. **`Property 'focus' does not exist on type 'TextInputType'`:**
+   Use `TextInputInstance` (not `TextInput`) as the generic type for `useRef`:
+   ```tsx
+   import { TextInput, type TextInputInstance } from 'react-native';
+
+   const emailRef = useRef<TextInputInstance>(null);
+   emailRef.current?.focus();
+   ```
+2. **React Hook Form `handleSubmit(onSubmit)` rejected by `onPress` / `onSubmitEditing`:**
+   React Native 0.88 events (`GestureResponderEvent`, `TextInputSubmitEditingEvent`) do not match React web's `BaseSyntheticEvent`. Wrap `handleSubmit` in a zero-arg handler:
+   ```tsx
+   const submitForm = (): void => {
+     void handleSubmit(onSubmit)();
+   };
+   ```
+3. **`AppState.currentState` is `string | null | undefined`:**
+   Narrow `AppState.currentState` before assigning it to `AppStateStatus` (see [AppStateMonitor.tsx](../days/day-25-notifications-and-background-tasks/examples/AppStateMonitor.tsx)).
+4. **`ListFooterComponent` / `ListHeaderComponent` rejects `null`:**
+   Return `undefined` instead of `null` when conditionally omitting list header/footer elements.
+5. **`jest-expo` complains about missing `@react-native/jest-preset`:**
+   In React Native 0.88, Jest's React Native preset lives in `@react-native/jest-preset`. Install it as a dev dependency: `npx expo install @react-native/jest-preset --dev`.
+
 ---
 
 ## 6. iOS Simulator & Android Emulator Failures

@@ -6,25 +6,43 @@ By the end of Day 07, you will be able to:
 
 - Combine everything from Week 1—TypeScript, React components, hooks, Flexbox layouts, light/dark themes, safe areas, and core components—into a cohesive multi-screen mobile app.
 - Break a mobile UI into small, reusable, strictly typed building blocks (`Avatar`, `StatItem`, `SkillTag`, `ActionButton`).
-- Manage interactive UI state cleanly (following/unfollowing, endorsing skills, switching themes, opening modals).
+- Manage interactive UI state cleanly (following/unfollowing, endorsing skills, switching themes, opening modals) without duplicating derived state.
 - Implement simple state-driven screen switching between a **Profile** screen and an **About** screen, understanding why dedicated navigation libraries like Expo Router (Day 08) become essential as apps grow.
 
 ## Prerequisites
 
-- Completed Days 01 through 06:
+- Completed Week 1 (Days 01 through 06):
+  - [Day 01: Introduction to React Native](../day-01-introduction/README.md) & [Day 02: JavaScript & TypeScript](../day-02-javascript-typescript/README.md)
+  - [Day 03: React Fundamentals](../day-03-react-fundamentals/README.md) & [Day 04: React Hooks](../day-04-react-hooks/README.md)
   - [Day 05: Styling and Layout](../day-05-styling-and-layout/README.md)
   - [Day 06: Core React Native Components](../day-06-core-components/README.md)
 - Ready to celebrate finishing Week 1 by building a real portfolio-worthy mobile app!
 
+## Why This Concept Matters
+
+Knowing individual APIs in isolation is very different from assembling them into a cohesive, maintainable app. Real mobile screens combine safe areas, light/dark theme palettes, responsive cards, resilient image fallbacks, and shared interactive state all at once. Practicing **component decomposition** and **single-source-of-truth state** early keeps your screens readable, testable, and ready for multi-screen routing, forms, and live APIs in Week 2.
+
 ## Introduction
 
-Welcome to your **Week 1 Capstone**! Over the past six days, you learned the mental models behind React Native, TypeScript, React hooks, Flexbox styling, theming, safe areas, and core components. Today, you move from isolated concepts to shipping a complete, polished **Developer Profile App**.
+Welcome to your **Week 1 Capstone**! Over the past six days, you learned the mental models behind React Native, TypeScript, React hooks, Flexbox styling, theming, safe areas, and core components. Today, you move from isolated exercises to shipping a complete, polished **Developer Profile App**.
 
 Instead of dumping all JSX into one giant 400-line component, you will design clean, reusable UI primitives (`Avatar`, `StatItem`, `SkillTag`, and `ActionButton`), wire up Light and Dark Mode support, add interactive state (Follow button, Skill Endorsements, Contact Modal), and connect two screens (`Profile` and `About`) via a bottom tab bar.
 
-For the full standalone project guide and extension ideas, see **[Project 01: Developer Profile App](../../projects/project-01-profile-app/README.md)**.
+Day 07 pairs directly with the full standalone capstone in **[Project 01: Developer Profile App](../../projects/project-01-profile-app/README.md)**—where the exact same Week 1 architecture is split into dedicated `types/`, `components/`, and `screens/` folders.
 
 ## Concepts
+
+### How Day 07 Ties Together Week 1 (Days 01–06)
+
+Every section of today's Developer Profile App directly applies one of your Week 1 skills:
+
+| Week 1 Day | Concept Learned | How It Shows Up in Today's App |
+| --- | --- | --- |
+| **Day 01–02** | Expo + Strict TypeScript | Typed `Palette`, `ScreenTab`, `ThemeMode`, and `TimelineEntry` interfaces with zero `any` |
+| **Day 03** | Reusable React Components | Modular primitives (`Avatar`, `StatItem`, `SkillTag`, `ActionButton`) accepting typed props |
+| **Day 04** | React Hooks & Derived State | `useState` for interactive tabs/follows/endorsements; computed `followerCount` and `endorsedSkills.length` |
+| **Day 05** | Flexbox, Themes & Safe Areas | `SafeAreaProvider` / `SafeAreaView`, `useColorScheme()`, `Platform.select` shadows, and responsive card rows |
+| **Day 06** | Core RN Components | `View`, `Text`, `Image` (with `onError` fallback), `Pressable`, `ScrollView`, and a Contact `Modal` |
 
 ### 1. Component Decomposition (Thinking in Small Primitives)
 
@@ -66,9 +84,17 @@ Before moving into Week 2 (Navigation, Forms, State, APIs, and Auth), confirm yo
 
 ## Code Examples
 
-### Example: Complete Developer Profile App
+> **How to run this Week 1 Capstone**: `ProfileAppDemo.tsx` is a **runnable self-contained app screen** wrapped in `SafeAreaProvider` and `SafeAreaView`, and it also exports its reusable building blocks (`Avatar`, `StatItem`, `SkillTag`, `ActionButton`).
+> - **In this repository**: Run `npm start` from the repo root to open the shared Expo launcher on iOS Simulator, Android Emulator, or Expo Go and preview Day 07 immediately.
+> - **In your own Expo project**: Place it in `app/index.tsx` to run directly, or split the exported components into `components/` and `screens/` following **[Project 01: Developer Profile App](../../projects/project-01-profile-app/README.md)**.
 
-Open [`./examples/ProfileAppDemo.tsx`](./examples/ProfileAppDemo.tsx) to inspect the complete Week 1 Capstone implementation. It includes:
+### Example: Complete Developer Profile App (Runnable Screen + Reusable Primitives)
+
+- **File**: [`./examples/ProfileAppDemo.tsx`](./examples/ProfileAppDemo.tsx)
+- **Type**: Runnable multi-tab screen component (default export `ProfileAppDemo`) + named reusable exports (`Avatar`, `StatItem`, `SkillTag`, `ActionButton`)
+- **Suggested Expo placement**: `app/index.tsx` (or refactored into `src/components/` and `src/screens/` as shown in [`../../projects/project-01-profile-app/README.md`](../../projects/project-01-profile-app/README.md))
+
+Key features included:
 
 - Exported reusable components: `Avatar`, `StatItem`, `SkillTag`, `ActionButton`
 - Automatic Light/Dark Mode via `useColorScheme()` plus a manual theme toggle in the top bar
@@ -85,6 +111,41 @@ Open [`./examples/ProfileAppDemo.tsx`](./examples/ProfileAppDemo.tsx) to inspect
 4. **Add Interactive Feedback**: Every `Pressable` uses a style callback (`({ pressed }) => [...]`) to dim slightly on touch, plus `accessibilityRole` and `accessibilityState` for screen reader support.
 5. **Switch Screens with Preserved State**: Toggling between the `Profile` and `About` tabs swaps the content inside `<ScrollView>` while keeping `isFollowing`, `endorsedSkills`, and `themeOverride` alive in parent state.
 
+## Expected Output
+
+When you preview **`ProfileAppDemo.tsx`** via `npm start`, you will see a complete 2-tab mobile app:
+
+```text
+┌─────────────────────────────────────────┐
+│ Developer Profile              [ Dark ] │
+├─────────────────────────────────────────┤
+│ ┌─────────────────────────────────────┐ │
+│ │ (ML) [Open to Collaborate]          │ │
+│ │      Maya Lin                       │ │
+│ │      React Native & Expo Engineer   │ │
+│ │      Toronto, Canada • UTC-5        │ │
+│ │                                     │ │
+│ │ [   Follow   ]  [    Contact    ]   │ │
+│ └─────────────────────────────────────┘ │
+│ ┌─────────────────────────────────────┐ │
+│ │   14     │   1,284    │      2      │ │
+│ │ Shipped  │ Followers  │  Endorsed   │ │
+│ └─────────────────────────────────────┘ │
+│ ┌─────────────────────────────────────┐ │
+│ │ Core Skills (Tap to Endorse)        │ │
+│ │ [React Native ✓] [TypeScript ✓] ... │ │
+│ └─────────────────────────────────────┘ │
+├─────────────────────────────────────────┤
+│     [ Profile ]    │      [ About ]     │
+└─────────────────────────────────────────┘
+```
+
+- **Tapping `Follow`** switches the button to `"Following ✓"` and updates **Followers** from `1,284` to `1,285`.
+- **Tapping any skill pill** adds/removes the `✓` highlight and updates the **Endorsed** counter immediately.
+- **Tapping `Dark` / `Light`** in the top bar switches every surface, border, shadow, and text color across both tabs.
+- **Tapping `Contact`** fades in a centered contact dialog; tapping **Done** (or Android Back) closes it.
+- **Switching to `About`** displays the app summary and vertical experience timeline while preserving your Follow, Endorsement, and Theme choices when you switch back to **Profile**.
+
 ## Common Mistakes
 
 1. **Building a single monolithic screen component**
@@ -97,7 +158,7 @@ Open [`./examples/ProfileAppDemo.tsx`](./examples/ProfileAppDemo.tsx) to inspect
    - *Why it hurts*: Offline users or slow connections leave blank holes where avatars belong.
    - *Fix*: Always handle `onError` with a clean initials or placeholder fallback.
 4. **Hardcoding white text or black backgrounds without checking Dark Mode**
-   - *Fix*: Route every color through your theme palette and preview both modes before wrapping up.
+   - *Troubleshooting tip*: Toggle Dark Mode on your simulator (`Cmd + Shift + A` on iOS Simulator) or tap the top-bar toggle and check every text label, border, and modal card for contrast.
 
 ## Best Practices
 
@@ -108,7 +169,7 @@ Open [`./examples/ProfileAppDemo.tsx`](./examples/ProfileAppDemo.tsx) to inspect
 
 ## Exercises
 
-Head to [`./exercises/README.md`](./exercises/README.md) and open [`./exercises/ProfileSectionExercise.tsx`](./exercises/ProfileSectionExercise.tsx):
+Head to [`./exercises/README.md`](./exercises/README.md) for detailed requirements, acceptance criteria, and hints, then open [`./exercises/ProfileSectionExercise.tsx`](./exercises/ProfileSectionExercise.tsx):
 
 1. **Beginner**: Build a Featured Projects card list with a `"Star"` toggle button that updates each project's live star count.
 2. **Intermediate**: Add Light and Dark Mode palettes using `useColorScheme()` plus an interactive `"Available for Hire"` / `"Focused on Building"` availability toggle.
@@ -116,13 +177,24 @@ Head to [`./exercises/README.md`](./exercises/README.md) and open [`./exercises/
 
 ## Solutions
 
+Try building the profile workspace yourself first before checking the reference solution!
+
+<details>
+<summary>Click to view solution notes &amp; links</summary>
+
 Compare your finished code with [`./solutions/ProfileSectionSolution.tsx`](./solutions/ProfileSectionSolution.tsx).
 
-Notice how the solution introduces a reusable `SectionCard` wrapper component using `children: ReactNode`, computes `totalStars` directly from `PROJECTS` and `starredIds` without duplicate state, and preserves all edits when switching tabs.
+Key highlights in the reference solution:
+- Introduces a reusable `SectionCard` wrapper component using `children: ReactNode` and a typed `ThemeColors` palette (`LIGHT_COLORS` / `DARK_COLORS`).
+- Computes `totalStars` directly via `PROJECTS.reduce(...)` from `PROJECTS` and `starredIds` with zero duplicate state.
+- Uses a segmented `tabBar` (`Overview` / `Projects`) that preserves both starred projects and edited bio text when switching views.
+- Trims `draftBio` before saving so accidental blank/whitespace-only submissions cannot wipe out the profile bio.
+
+</details>
 
 ## Mini Project
 
-**Ship Project 01 — Your Personal Developer Profile App**: Follow the full specification in **[`projects/project-01-profile-app/README.md`](../../projects/project-01-profile-app/README.md)** to customize this capstone with your own bio, skills, project showcase, social links, and custom color accent!
+**Ship Project 01 — Your Personal Developer Profile App**: Follow the full specification and modular folder structure in **[`projects/project-01-profile-app/README.md`](../../projects/project-01-profile-app/README.md)** to customize this Week 1 capstone with your own bio, category-filtered skills, external links (`Linking`), project showcase, and custom color accent—then preview it via `npm start`!
 
 ## Key Takeaways
 

@@ -3,6 +3,7 @@
 ## Learning Objectives
 
 By the end of Day 16, you will be able to:
+
 - Explain how `FlatList` **virtualization** works and tune `keyExtractor`, `getItemLayout`, `initialNumToRender`, `maxToRenderPerBatch`, `windowSize`, and `removeClippedSubviews`.
 - Eliminate unnecessary list-item re-renders using `React.memo`, `useCallback`, and `useMemo` — and understand where **React Compiler** automates memoization versus where architecture still matters.
 - Profile React Native apps with **React Native DevTools** and **React DevTools Profiler** flamegraphs to find real bottlenecks before optimizing.
@@ -13,6 +14,10 @@ By the end of Day 16, you will be able to:
 
 - Completed [Day 15: Animations](../day-15-animations/README.md).
 - Comfortable building lists with `FlatList` from Day 6 and using React hooks from Day 4.
+
+## Why This Concept Matters
+
+Almost every real mobile app is built around scrolling lists: social feeds, chat histories, e-commerce catalogs, search results, and transaction logs. Unlike desktop browsers with gigabytes of spare RAM, mobile devices enforce strict frame budgets (16.6 ms per frame at 60 FPS, or 8.3 ms at 120 FPS ProMotion) and terminate apps that consume too much memory. Knowing how to virtualize lists, prevent wasted row re-renders, and recycle images cleanly is what separates a sluggish prototype from a butter-smooth app users love opening every day.
 
 ## Introduction
 
@@ -28,6 +33,12 @@ Unlike `ScrollView` (which mounts **every** child immediately), `FlatList` build
 
 - Items entering the buffer window are mounted in batches.
 - Items far outside the buffer window are replaced with lightweight blank spacers to reclaim memory.
+
+> **React Web vs. React Native: Web DOM Lists vs. Virtualized `FlatList`**
+>
+> On the web, developers routinely write `{items.map((item) => <Row key={item.id} item={item} />)}` inside a scrollable `<div>`. For 20–50 simple items, `.map()` inside a React Native `ScrollView` also works fine.
+>
+> At **500+ items on mobile**, however, `ScrollView` + `.map()` mounts **every single native view and decoded image simultaneously** into RAM before the user scrolls a pixel. This causes long initial freezes, dropped frames during scrolling, and sudden OS memory crashes on mid-range Android devices. `FlatList` solves this by **virtualizing** rows automatically — similar to reaching for `react-window` or `@tanstack/react-virtual` on the web, except virtualization is built into React Native from day one.
 
 Key virtualization props and when to tune them:
 
@@ -75,7 +86,12 @@ Images are often the #1 cause of janky scrolling and memory spikes in mobile lis
 
 ## Code Examples
 
-See [`examples/OptimizedProductList.tsx`](./examples/OptimizedProductList.tsx) for the full, runnable catalog list.
+### Example 1: Optimized Product Catalog List
+
+- **Type**: Runnable screen/component
+- **File**: [`examples/OptimizedProductList.tsx`](./examples/OptimizedProductList.tsx)
+- **Where to place in an Expo project**: Save under `src/features/catalog/screens/OptimizedProductList.tsx` and render it from an Expo Router route (such as `app/catalog.tsx` or `app/index.tsx`).
+- **How to run**: Start this repository's shared Expo launcher with `npm start` (or `npm run ios` / `npm run android`) and render `<OptimizedProductList />` in your active route to scroll through all 200 items and test filtering and favorites live.
 
 ```tsx
 const ProductRow = memo(function ProductRow({
@@ -122,12 +138,37 @@ const getItemLayout = (
 4. **Notify `FlatList` via `extraData`**: Because `FlatList` is a `PureComponent` internally, passing `extraData={favoriteIds}` tells it to check visible rows when favorites change — and `React.memo` ensures only the toggled row actually re-renders.
 5. **Optimize images for cell reuse**: `expo-image` with `cachePolicy="memory-disk"` and `recyclingKey={item.id}` prevents both redundant network fetches and stale-image flicker.
 
+## Expected Output
+
+When you render `<OptimizedProductList />` in Expo Go or a simulator, you see a crisp, responsive 200-item catalog screen:
+
+```text
+┌──────────────────────────────────────────┐
+│ Catalog (200)               Favorites: 1 │
+│ ┌──────────────────────────────────────┐ │
+│ │ Filter by product or category...     │ │
+│ └──────────────────────────────────────┘ │
+│ ┌──────┐ Audio Pro Model #1          [★] │
+│ │ img  │ Audio                           │
+│ └──────┘ $29.00                          │
+│ ──────────────────────────────────────── │
+│ ┌──────┐ Keyboards Pro Model #2      [☆] │
+│ │ img  │ Keyboards                       │
+│ └──────┘ $44.00                          │
+└──────────────────────────────────────────┘
+```
+
+- **Typing in the search box** (e.g., `"Audio"`) immediately updates `Catalog (50)` with zero input lag; searching for an unmatched term displays `"No matching products found."`.
+- **Tapping a star (`☆` → `★`)** increments `Favorites:` in the header and highlights only that button in amber — in React DevTools Profiler, only the toggled `ProductRow` renders while every other visible row stays gray (skipped).
+- **Fast scrolling** keeps thumbnails smooth and prevents recycled cells from flashing a previous product's image.
+
 ## Common Mistakes
 
 - **Creating inline closures in `renderItem`**: Writing `onPress={() => handleSelect(item.id)}` creates a brand-new function reference every render, completely defeating `React.memo` on the row.
+  - *Fix*: Pass a stable `useCallback` handler (`onSelect={handleSelect}`) and invoke `onSelect(item.id)` inside the memoized row.
 - **Creating inline style objects or arrays unnecessarily**: Passing `style={{ padding: 16 }}` allocates a new object on every render; define styles in `StyleSheet.create`.
 - **Using array `index` as `keyExtractor`**: Filtering, inserting, or deleting items shifts indices, causing React to reuse the wrong component state and images for the wrong items.
-- **Wrong `getItemLayout` math**: Forgetting separator height or variable-height rows causes jerky jumps when using `scrollToIndex`. Only use `getItemLayout` when row heights are truly predictable.
+- **Wrong `getItemLayout` math**: Forgetting separator height or variable-height rows causes jerky jumps when using `scrollToIndex`. Only use `getItemLayout` when row heights are truly predictable — or include the separator height in `length` and `offset`.
 - **Benchmarking performance in Dev mode**: Development builds run unminified JS with extra React checks and dev tooling. Always verify frame rates in a **release build** on a physical device.
 
 ## Best Practices
@@ -140,7 +181,7 @@ const getItemLayout = (
 
 ## Exercises
 
-Head to [`exercises/README.md`](./exercises/README.md) and open [`exercises/MemoizedRowExercise.tsx`](./exercises/MemoizedRowExercise.tsx):
+Head to [`exercises/README.md`](./exercises/README.md) for detailed requirements, acceptance criteria, and hints, then open [`exercises/MemoizedRowExercise.tsx`](./exercises/MemoizedRowExercise.tsx):
 
 1. **Beginner**: Wrap `ContactRow` in `React.memo`, pass `onSelect: (id: string) => void` instead of an inline closure, and stabilize `handleSelect` with `useCallback`.
 2. **Intermediate**: Add module-level `keyExtractor` and `getItemLayout`, memoize `filteredContacts` and `renderItem`, and tune `FlatList` virtualization props.
@@ -148,13 +189,25 @@ Head to [`exercises/README.md`](./exercises/README.md) and open [`exercises/Memo
 
 ## Solutions
 
-Review the complete optimized reference implementation:
+Try completing the exercises independently before opening the reference solution.
 
-- [`solutions/MemoizedRowSolution.tsx`](./solutions/MemoizedRowSolution.tsx): Eliminates wasted row re-renders, computes exact fixed-height layouts, and leverages `expo-image` caching and recycling.
+<details>
+<summary>Click to view solution notes &amp; links</summary>
+
+- **Reference implementation**: [`solutions/MemoizedRowSolution.tsx`](./solutions/MemoizedRowSolution.tsx)
+- **What changed**:
+  - `ContactRow` is wrapped in `memo(...)` and takes `onSelect: (id: string) => void` instead of an inline closure created inside `renderItem`.
+  - `ROW_HEIGHT = 76`, `keyExtractor`, and `getItemLayout` are hoisted to module scope so their references never change across renders.
+  - `filteredContacts` is memoized with `useMemo` (matching both `fullName` and `role`), and `renderItem` is memoized with `useCallback`.
+  - `FlatList` is tuned with `initialNumToRender={12}`, `maxToRenderPerBatch={10}`, `windowSize={7}`, `removeClippedSubviews`, and `keyboardShouldPersistTaps="handled"`.
+  - The avatar uses `Image` from `expo-image` with `contentFit="cover"`, `cachePolicy="memory-disk"`, `recyclingKey={contact.id}`, and `transition={150}`.
+
+</details>
 
 ## Mini Project
 
 Build a **1,000-Item News Feed** with:
+
 - Category filter pills (`All`, `Tech`, `Design`, `Mobile`) memoized with `useMemo`.
 - Bookmark toggle per article that re-renders **only** the toggled card (verify in React DevTools Profiler!).
 - Cached thumbnails via `expo-image` and a "Scroll to Top" floating button powered by `flatListRef.current?.scrollToOffset({ offset: 0, animated: true })`.

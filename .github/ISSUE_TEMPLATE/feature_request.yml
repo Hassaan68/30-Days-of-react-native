@@ -1,0 +1,41 @@
+name: Feature Request
+description: Propose a new bonus topic, capstone project idea, or developer tooling improvement.
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea for a new topic, capstone project, or validation script? Share the details below!
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Learning Need or Problem
+      description: What gap in the curriculum or contributor workflow does this address?
+      placeholder: "Learners building production apps often need guidance on..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Addition
+      description: Describe the topic, project scope, or tooling change you envision.
+      placeholder: "Add a guide or project covering..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Stack & Compatibility Notes
+      description: Does this require any new dependencies, Development Builds, or specific Expo SDK 58 / React Native 0.88 APIs?
+      placeholder: "Uses existing Expo SDK 58 packages / requires Development Build..."
+
+  - type: checkboxes
+    id: willing_to_pr
+    attributes:
+      label: Contribution
+      options:
+        - label: I am interested in helping implement this feature.

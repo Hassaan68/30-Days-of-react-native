@@ -1,0 +1,47 @@
+name: Content Improvement
+description: Suggest clearer explanations, additional exercises, better examples, or a tutorial translation.
+title: "[Content]: "
+labels: ["documentation", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us make **30 Days of React Native** clearer and more helpful for learners!
+
+  - type: dropdown
+    id: improvement_type
+    attributes:
+      label: Type of Improvement
+      options:
+        - Clarify an explanation or concept
+        - Improve or expand a code example
+        - Add a new exercise / challenge
+        - Update troubleshooting or setup docs
+        - Propose a tutorial translation
+    validations:
+      required: true
+
+  - type: input
+    id: target_files
+    attributes:
+      label: Target Lesson(s) or Doc(s)
+      description: Which day, project, or guide would this improve?
+      placeholder: "e.g., days/day-15-animations/README.md"
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Proposed Improvement
+      description: Explain what is currently confusing or missing, and how you would improve it.
+      placeholder: "Learners coming from web CSS often confuse..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: willing_to_pr
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to submit a Pull Request for this improvement.

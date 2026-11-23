@@ -1,0 +1,12 @@
+# Update <OWNER> with your GitHub username or organization name when publishing.
+blank_issues_enabled: false
+contact_links:
+  - name: Frequently Asked Questions (docs/FAQ.md)
+    url: https://github.com/OWNER/30days-of-react-native/blob/main/docs/FAQ.md
+    about: Check answers to common questions about Expo, TypeScript, setup, and pacing.
+  - name: Support & Troubleshooting (SUPPORT.md)
+    url: https://github.com/OWNER/30days-of-react-native/blob/main/SUPPORT.md
+    about: Find troubleshooting guides, Discussions, and official React Native / Expo communities.
+  - name: Expo & React Native Official Docs
+    url: https://docs.expo.dev/
+    about: Official Expo SDK 58 and Expo Router reference documentation.

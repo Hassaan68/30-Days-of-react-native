@@ -1,0 +1,69 @@
+name: Bug Report
+description: Report broken code, a TypeScript/lint error, a broken link, or an outdated React Native / Expo API.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please check `docs/TROUBLESHOOTING.md` and `docs/FAQ.md` first to see if a fix already exists.
+
+  - type: input
+    id: location
+    attributes:
+      label: Affected File or Lesson
+      description: Which day, project, or doc file has the issue?
+      placeholder: "e.g., days/day-08-navigation-expo-router/examples/TabLayout.tsx"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Issue Category
+      options:
+        - Broken code example / runtime error
+        - TypeScript or ESLint error
+        - Outdated or deprecated React Native / Expo API
+        - Broken link or typo
+        - Test failure or CI issue
+        - Setup / documentation inaccuracy
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What Happened?
+      description: Describe the bug clearly and include the expected behavior.
+      placeholder: "Describe what you expected vs. what actually happened..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Share the exact commands or steps to reproduce the issue.
+      placeholder: |
+        1. Run `npm install`
+        2. Run `npm run typecheck`
+        3. Observe error in ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Message or Logs
+      description: Paste relevant console output, Metro errors, or stack traces.
+      render: shell
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node.js version, Expo SDK version, and runtime (Expo Go, Simulator, Emulator, or Dev Build).
+      placeholder: "macOS 15, Node 24.3, Expo SDK 58, iOS Simulator"
+    validations:
+      required: true

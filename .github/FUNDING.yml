@@ -1,0 +1,10 @@
+# Community Sponsorship Configuration
+#
+# Uncomment and replace placeholders with real maintainer or community handles
+# if you want GitHub to display a "Sponsor" button on this repository.
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+#
+# github: [your-github-username]
+# open_collective: your-open-collective-slug
+# ko_fi: your-kofi-username
+# custom: ["https://example.com/sponsor"]

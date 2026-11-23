@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "30 Days of React Native",
+    "slug": "30-days-of-react-native",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "thirtydaysrn",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.thirtydaysrn.app"
+    },
+    "android": {
+      "package": "dev.thirtydaysrn.app",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
